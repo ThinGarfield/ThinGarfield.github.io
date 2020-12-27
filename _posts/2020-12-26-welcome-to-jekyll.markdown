@@ -1,6 +1,6 @@
 ---
-layout: post
-title:  "My Test Post"
+layout: default
+title:  "Cow Rectangles"
 date:   2020-12-26 21:09:36 -0800
 categories: jekyll update
 ---
