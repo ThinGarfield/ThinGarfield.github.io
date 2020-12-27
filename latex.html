@@ -1,0 +1,29 @@
+---
+title: $\LaTeX$ Playground
+description: Input $\LaTeX$ in the text box and see the rendered display. Unfortunately it doesn't support drawing with Asymptote.
+layout: default
+permalink: /latex
+---
+
+<p>Input any $\LaTeX$ code below. Type <b>Ctrl+S</b> (Windows) or <b>Cmd+S</b> (Mac) to render:</p>
+<div id='input'>
+    <textarea id="inputbox" class="latexinput" rows="20" cols="100"></textarea>
+</div>
+<hr>
+<div id='output'></div>
+
+<script>
+    document.getElementById("inputbox").addEventListener("keydown", oninput);
+    function isCtrlS(event) {
+        return (window.navigator.platform.match("Mac") ? e.metaKey : event.ctrlKey)
+            && event.keyCode == 83;
+    }
+    function oninput(event) {
+        if (!isCtrlS(event)) return;
+        event.preventDefault();
+        var inputText = document.getElementById("inputbox").value;
+        var output = document.getElementById("output");
+        output.innerHTML = "$$" + inputText + "$$";
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, output]);
+    }
+</script>

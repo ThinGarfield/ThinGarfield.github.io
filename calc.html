@@ -4,7 +4,7 @@ description: It can assign variables ("y=2^15"), use history item in input ("#5 
 layout: default
 permalink: /calc
 ---
-<p>Session history:</p>
+<p>Session history: &nbsp <span id="sessionid" class="invisible"></span></p>
 <div id='history'>
 </div>
 <hr>
@@ -15,12 +15,33 @@ permalink: /calc
 </div>
 <script>
     var itemCount = 1;
+    var sessionid = 0;
+    genSessionid();
+
+    function genSessionid() {
+        // var decodedCookie = decodeURIComponent(document.cookie);
+        // var ca = decodedCookie.split(';');
+        // for (var i = 0; i < ca.length; i++) {
+        //     var c = ca[i];
+        //     while (c.charAt(0) == ' ') {
+        //         c = c.substring(1);
+        //     }
+        //     if (c.indexOf("sessionid=") == 0) {
+        //         return c.substring(name.length, c.length);
+        //     }
+        // }
+        sessionid = "S_" + Math.random() * 10000000000;
+        document.getElementById("sessionid").innerHTML = sessionid;
+        //        document.cookie = "sessionid=" + sessionid;
+    }
+
     function waitforenter(event) {
         if (event.key !== "Enter") return;
         var inputText = document.getElementById("inputbox").value;
         document.getElementById("inputbox").value = "";
         if (inputText === "clear") {
             document.getElementById("history").innerHTML = "";
+            genSessionid();
             itemCount = 1;
         } else {
             var item = document.createElement("div");
@@ -38,5 +59,6 @@ permalink: /calc
             itemCount++;
         }
         document.getElementById("inputidx").innerText = itemCount;
+        document.getElementById("sessionid").innerHTML = sessionid;
     }
 </script>
