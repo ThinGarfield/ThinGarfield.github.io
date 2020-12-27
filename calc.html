@@ -2,11 +2,39 @@
 layout: default
 permalink: /calc
 ---
-<div id='root'>
-    <div id="input-1" class="calcitem">
-        <div class="calclabel">[1]:</div>
-        <div class="calccontent" tabindex="-1">
-            <pre width="500px">  x=y^2</pre>
-        </div>
-    </div>
+<p>Session history:</p>
+<div id='history'>
 </div>
+<hr>
+<p>Input math expression below (use "clear" to clear session history):</p>
+<div id='input' class="calcitem">
+    <div class="calclabel">[<span id="inputidx">1</span>]:</div>
+    <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="waitforenter(event)">
+</div>
+<script>
+    var itemCount = 1;
+    function waitforenter(event) {
+        if (event.key !== "Enter") return;
+        var inputText = document.getElementById("inputbox").value;
+        document.getElementById("inputbox").value = "";
+        if (inputText === "clear") {
+            document.getElementById("history").innerHTML = "";
+            itemCount = 1;
+        } else {
+            var item = document.createElement("div");
+            item.className = "calcitem";
+            var label = document.createElement("div");
+            label.className = "calclabel";
+            label.innerText = "[" + itemCount + "]:";
+            item.appendChild(label);
+            var content = document.createElement("div");
+            content.className = "calchistory";
+            content.innerHTML = "$$" + inputText + "$$";
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
+            item.appendChild(content);
+            document.getElementById("history").append(item);
+            itemCount++;
+        }
+        document.getElementById("inputidx").innerText = itemCount;
+    }
+</script>
