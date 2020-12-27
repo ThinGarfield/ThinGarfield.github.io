@@ -1,0 +1,33 @@
+<!-- This finds the current page so it can be highlighted. -->
+
+{% for entry in site.data.navigation %}
+{% capture fullurl %}{{ site.baseurl }}{{ entry.url }}{% endcapture %}
+{% if fullurl == page.url %}
+{% assign current_page = fullurl %}
+{% break %}
+{% elsif page.url contains fullurl %}
+{% assign current_page = fullurl %}
+{% endif %}
+{% endfor %}
+
+<!-- Then we build the nav bar. -->
+<nav>
+    <center>
+        <table>
+            <tr>
+                {% for entry in site.data.navigation %}
+                {% if entry.url == current_page %}
+                <!-- uses yellow, you can change to any other hexadecimal colour code. -->
+                {% assign current = ' style="background-color: #FFFFFF; font-weight: bold; border: 2px solid blue;"' %}
+                {% else %}
+                <!-- We have to declare it 'null' to ensure it doesn't propagate. -->
+                {% assign current = ' style="background-color: #cccccc"' %}
+                {% endif %}
+                <td{{ current }} width="150" align="center"><a href="{{ site.baseurl }}{{ entry.url }}"
+                        style="display: block;width: 150px">{{ entry.title
+                        }}</a></td>
+                    {% endfor %}
+            </tr>
+        </table>
+    </center>
+</nav>

@@ -20,7 +20,6 @@
 
 title: Of Math and ...
 description: >- # this means to ignore newlines until next section
-  This site contains my work on math, computer science, 
-  machine learning, and other random thoughts.
+  My work on math, programming, machine learning, and other random thoughts.
 google_analytics:
 theme: jekyll-theme-cayman
