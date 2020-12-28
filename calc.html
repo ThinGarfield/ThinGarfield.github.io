@@ -14,7 +14,6 @@ permalink: /calc
     <div class="calclabel">[<span id="inputidx">1</span>]:</div>
     <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="monitorInput(event)">
 </div>
-<div id='debugg'></div>
 
 <script>
     var itemCount = 1;
@@ -48,8 +47,6 @@ permalink: /calc
 
     function postServer(inputText) {
         var request = JSON.stringify({ sessionid: sessionid, input: inputText });
-        document.getElementById("debugg").innerHTML = request;
-
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState != 4) return;
