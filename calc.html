@@ -4,6 +4,7 @@ description: It can assign variables ("y=2^15"), use history item in input ("#5 
 layout: default
 permalink: /calc
 ---
+
 <p>Session history: &nbsp <span id="sessionid" class="invisible"></span></p>
 <div id='history'>
 </div>
@@ -13,6 +14,8 @@ permalink: /calc
     <div class="calclabel">[<span id="inputidx">1</span>]:</div>
     <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="monitorInput(event)">
 </div>
+<div id='debugg'></div>
+
 <script>
     var itemCount = 1;
     var sessionid = 0;
@@ -45,20 +48,23 @@ permalink: /calc
 
     function postServer(inputText) {
         var request = JSON.stringify({ sessionid: sessionid, input: inputText });
-        alert(request);
+        document.getElementById("debugg").innerHTML = request;
 
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState != 4) return;
             if (this.status == 200) {
-                setOutput(true, this.responseText);
+                var rsp = JSON.parse(this.responseText);
+                var output = rsp.output;
+                if (output === "") output = "Error: missing response";
+                setOutput(true, output);
             } else {
                 setOutput(false, "Server error: " + this.status + " / " + this.statusText);
             }
         };
-        xhttp.open("POST", "https://us-west4-iotacalc.cloudfunctions.net/calc", true);
-        xhttp.setRequestHeader("Content-type", "application/json");
-        xhttp.send(JSON.stringify(request));
+        xhttp.open("POST", "https://us-west4-iotacalc.cloudfunctions.net/calc");
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(request);
     }
 
     function createEntry(inOut, successOut, text) { // true=in, false=out
