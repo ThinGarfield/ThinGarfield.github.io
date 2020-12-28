@@ -44,10 +44,24 @@ permalink: /calc
     }
 
     function postServer(inputText) {
-        setOutput(inputText, inputText);
+        var request = JSON.stringify({ sessionid: sessionid, input: inputText });
+        alert(request);
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState != 4) return;
+            if (this.status == 200) {
+                setOutput(true, this.responseText);
+            } else {
+                setOutput(false, "Server error: " + this.status + " / " + this.statusText);
+            }
+        };
+        xhttp.open("POST", "https://us-west4-iotacalc.cloudfunctions.net/calc", true);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send(JSON.stringify(request));
     }
 
-    function createEntry(inOut, text) { // true=in, false=out
+    function createEntry(inOut, successOut, text) { // true=in, false=out
         var item = document.createElement("div");
         item.className = "calcitem";
         var label = document.createElement("div");
@@ -58,16 +72,17 @@ permalink: /calc
         content.className = "calchistory";
         if (inOut) {
             content.innerHTML = "<pre>" + text + "</pre>";
-        } else {
+        } else if (successOut) {
             content.innerHTML = "$$" + text + "$$";
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
+        } else {
+            content.innerHTML = "<span class='error'>" + text + "</span>";
         }
         item.appendChild(content);
         document.getElementById("history").append(item);
     }
-    function setOutput(inputText, outputText) {
-        createEntry(true, inputText);
-        createEntry(false, outputText);
+    function setOutput(success, outputText) {
+        createEntry(false, success, outputText);
         itemCount++;
         document.getElementById("inputidx").innerText = itemCount;
         document.getElementById("sessionid").innerHTML = sessionid;
@@ -80,6 +95,7 @@ permalink: /calc
         if (inputText === "clear") {
             clearHistory();
         } else {
+            createEntry(true, false, inputText);
             postServer(inputText);
         }
     }
