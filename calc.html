@@ -11,7 +11,7 @@ permalink: /calc
 <p>Input math expression below (use "clear" to clear session history):</p>
 <div id='input' class="calcitem">
     <div class="calclabel">[<span id="inputidx">1</span>]:</div>
-    <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="waitforenter(event)">
+    <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="monitorInput(event)">
 </div>
 <script>
     var itemCount = 1;
@@ -35,30 +35,52 @@ permalink: /calc
         //        document.cookie = "sessionid=" + sessionid;
     }
 
-    function waitforenter(event) {
+    function clearHistory() {
+        document.getElementById("history").innerHTML = "";
+        genSessionid();
+        itemCount = 1;
+        document.getElementById("inputidx").innerText = itemCount;
+        document.getElementById("sessionid").innerHTML = sessionid;
+    }
+
+    function postServer(inputText) {
+        setOutput(inputText, inputText);
+    }
+
+    function createEntry(inOut, text) { // true=in, false=out
+        var item = document.createElement("div");
+        item.className = "calcitem";
+        var label = document.createElement("div");
+        label.className = "calclabel";
+        label.innerText = (inOut ? "In[" : "Out[") + itemCount + "]:";
+        item.appendChild(label);
+        var content = document.createElement("div");
+        content.className = "calchistory";
+        if (inOut) {
+            content.innerHTML = "<pre>" + text + "</pre>";
+        } else {
+            content.innerHTML = "$$" + text + "$$";
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
+        }
+        item.appendChild(content);
+        document.getElementById("history").append(item);
+    }
+    function setOutput(inputText, outputText) {
+        createEntry(true, inputText);
+        createEntry(false, outputText);
+        itemCount++;
+        document.getElementById("inputidx").innerText = itemCount;
+        document.getElementById("sessionid").innerHTML = sessionid;
+    }
+
+    function monitorInput(event) {
         if (event.key !== "Enter") return;
         var inputText = document.getElementById("inputbox").value;
         document.getElementById("inputbox").value = "";
         if (inputText === "clear") {
-            document.getElementById("history").innerHTML = "";
-            genSessionid();
-            itemCount = 1;
+            clearHistory();
         } else {
-            var item = document.createElement("div");
-            item.className = "calcitem";
-            var label = document.createElement("div");
-            label.className = "calclabel";
-            label.innerText = "[" + itemCount + "]:";
-            item.appendChild(label);
-            var content = document.createElement("div");
-            content.className = "calchistory";
-            content.innerHTML = "$$" + inputText + "$$";
-            MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
-            item.appendChild(content);
-            document.getElementById("history").append(item);
-            itemCount++;
+            postServer(inputText);
         }
-        document.getElementById("inputidx").innerText = itemCount;
-        document.getElementById("sessionid").innerHTML = sessionid;
     }
 </script>
