@@ -51,10 +51,14 @@ permalink: /calc
         xhttp.onreadystatechange = function () {
             if (this.readyState != 4) return;
             if (this.status == 200) {
-                var rsp = JSON.parse(this.responseText);
-                var output = rsp.output;
-                if (output === "") output = "Error: missing response";
-                setOutput(true, output);
+                try {
+                    var rsp = JSON.parse(this.responseText);
+                    var output = rsp.output;
+                    if (output === "") output = "Error: missing response";
+                    setOutput(true, output);
+                } catch (e) {
+                    setOutput(true, this.responseText);
+                }
             } else {
                 setOutput(false, "Server error: " + this.status + " / " + this.statusText);
             }
