@@ -19,7 +19,7 @@ permalink: /ascii
         createBanner(document.getElementById("inputbox").value);
     }
     function createBanner(inputText) {
-        inputText = inputText.replace("(", "%28").replace(")", "%29").replace("*", "%2A").replace("`", "%2G");
+        //inputText = inputText.replace("(", "%28").replace(")", "%29").replace("*", "%2A");
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState != 4) return;
