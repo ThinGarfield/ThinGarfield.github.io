@@ -1,0 +1,35 @@
+---
+title: ASCII Art Generator
+description: Generate ASCII Art from the given text.
+layout: default
+permalink: /ascii
+---
+<p>Input text and hit Enter:</p>
+<div id='input' class="calcitem">
+    <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="monitorInput(event)">
+</div>
+<div id="outputbox" class="calcitem"></div>
+
+<script>
+    function setOutput(text) {
+        document.getElementById("outputbox").innerHTML = "<pre>" + text + "</pre>";
+    }
+    function monitorInput(event) {
+        if (event.key !== "Enter") return;
+        createBanner(document.getElementById("inputbox").value);
+    }
+    function createBanner(inputText) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState != 4) return;
+            if (this.status == 200) {
+                setOutput(this.responseText);
+            } else {
+                setOutput("Server error: " + this.status + " / " + this.statusText);
+            }
+        };
+        xhttp.open("GET", "https://us-west4-iotacalc.cloudfunctions.net/banner?t=" + inputText);
+        xhttp.send();
+    }
+    createBanner("Hello!");
+</script>
