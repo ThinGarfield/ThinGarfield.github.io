@@ -11,7 +11,12 @@ permalink: /ascii
     </tr>
     <tr>
         <td class="asclabel">Or, select an image file here:</td>
-        <td><input id="filebox" class="asctext" type="file" accept="image/*" onchange="monitorFiles(files)"></td>
+        <td>
+            <form action="https://us-west4-iotacalc.cloudfunctions.net/image" method="post" enctype="multipart/form-data" onsubmit="submitFiles(this); return false;">
+                <input id="filebox" class="tasctext" type="file" name="img" accept="image/*">
+                <input type="submit" value="Submit" />
+            </form>
+        </td>
     </tr>
 </table>
 <hr>
@@ -27,23 +32,29 @@ permalink: /ascii
         if (event.key !== "Enter") return;
         createBanner(document.getElementById("inputbox").value);
     }
+    function handleResponse(xhttp) {
+        if (xhttp.readyState != 4) return;
+        if (xhttp.status == 200) {
+            setOutput(xhttp.responseText);
+        } else {
+            setOutput("Server error: " + xhttp.status + " / " + xhttp.statusText);
+        }
+    }
     function createBanner(inputText) {
         //inputText = inputText.replace("(", "%28").replace(")", "%29").replace("*", "%2A");
         var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function () {
-            if (this.readyState != 4) return;
-            if (this.status == 200) {
-                setOutput(this.responseText);
-            } else {
-                setOutput("Server error: " + this.status + " / " + this.statusText);
-            }
-        };
+        xhttp.onreadystatechange = function () { handleResponse(this); };
         xhttp.open("POST", "https://us-west4-iotacalc.cloudfunctions.net/banner");
         xhttp.send(inputText);
     }
 
-    function monitorFiles(files) {
-
+    function submitFiles(theForm) {
+        var file = document.getElementById("filebox").value;
+        if (!file) return;
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () { handleResponse(this); };
+        xhttp.open("POST", theForm.action);
+        xhttp.send(new FormData(theForm));
     }
 
     createBanner("Hello there!");
