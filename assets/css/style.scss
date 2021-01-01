@@ -14,6 +14,19 @@
     border-radius: 0.3rem;
     margin: auto;    
 }
+.asclabel {
+    padding: 2px 4px;
+    font-family: verdana;
+    font-size: 1rem;
+    color: $code-text-color;
+    margin: auto;
+}
+.asctext {
+    flex: 1;
+    height: 45px;
+    width: 100%;
+    text-align: center;
+}
 .calchistory {
     flex: 1;
 }
@@ -30,4 +43,39 @@
 }
 .error {
     font-weight: bold;
+}
+.calchelp {
+    float: right;
+    width: 8em;
+    padding: 3px;
+}
+.callout {
+    position: fixed;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 90%;
+    display: none;
+}
+.callout-header {
+    padding: 5px 5px;
+    background: #555;
+    font-size: 1.1em;
+    color: white;
+}
+.callout-container {
+    padding: 15px;
+    background-color: #ccc;
+    color: black
+}
+.closebtn {
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+}
+.closebtn:hover {
+    color: lightgrey;
 }

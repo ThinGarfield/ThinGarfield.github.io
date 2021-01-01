@@ -4,8 +4,17 @@ description: It can assign variables ("y=2^15"), use history item in input ("#5 
 layout: default
 permalink: /calc
 ---
-
-<p>Session history: &nbsp <span id="sessionid" class="invisible"></span></p>
+<div id="helpcallout" class="callout" onclick="helpCalloutOff()">
+    <div class="callout-header">The following opertions/syntax are supported:</div>
+    <span class="closebtn" onclick="this.parentElement.style.display='none';">×</span>
+    <div class="callout-container">
+        {% include calchelp.html %}
+    </div>
+</div>
+<button onclick="helpCalloutOn()" class="calchelp">Help</button>
+<div class="calcitem">
+    <div>Session history: &nbsp <span id="sessionid" class="invisible"></span></div>
+</div>
 <div id='history'>
 </div>
 <hr>
@@ -80,6 +89,7 @@ permalink: /calc
         if (inOut) {
             content.innerHTML = "<pre>" + text + "</pre>";
         } else if (successOut) {
+            alert(text);
             content.innerHTML = "$$" + text + "$$";
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
         } else {
@@ -105,5 +115,13 @@ permalink: /calc
             createEntry(true, false, inputText);
             postServer(inputText);
         }
+    }
+
+    function helpCalloutOn() {
+        document.getElementById("helpcallout").style.display = "block";
+    }
+
+    function helpCalloutOff() {
+        document.getElementById("helpcallout").style.display = "none";
     }
 </script>

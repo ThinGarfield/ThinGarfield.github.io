@@ -4,11 +4,20 @@ description: Generate ASCII Art from the given text.
 layout: default
 permalink: /ascii
 ---
-<p>Input text and hit Enter:</p>
-<div id='input' class="calcitem">
-    <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="monitorInput(event)">
+<table class="asclabel">
+    <tr class="asclabel">
+        <td class="asclabel">Input text and hit Enter:</td>
+        <td class="asctext"><input id="inputbox" class="asctext" type="text" onkeyup="monitorInput(event)"> </td>
+    </tr>
+    <tr>
+        <td class="asclabel">Or, drop an image file here:</td>
+        <td><input id="filebox" class="asctext" type="file" accept="image/*" onchange="monitorFiles(files)"></td>
+    </tr>
+</table>
+<hr>
+<div class="asclabel">
+    <div id="outputbox" class="calcitem"></div>
 </div>
-<div id="outputbox" class="calcitem"></div>
 
 <script>
     function setOutput(text) {
@@ -32,5 +41,10 @@ permalink: /ascii
         xhttp.open("POST", "https://us-west4-iotacalc.cloudfunctions.net/banner");
         xhttp.send(inputText);
     }
-    createBanner("Hello!");
+
+    function monitorFiles(files) {
+
+    }
+
+    createBanner("Hello there!");
 </script>
