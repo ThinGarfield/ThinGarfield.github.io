@@ -17,14 +17,26 @@
             <tr>
                 {% for entry in site.data.navigation %}
                 {% if entry.url == current_page %}
-                {% assign current = ' style="background-color: #FFFFFF; font-weight: bold; border: 2px solid blue;"' %}
+                {% assign current = ' style="background-color: #FFFFFF; font-weight: bold; border: 3px solid blue;"' %}
                 {% else %}
-                {% assign current = ' style="background-color: #cccccc"' %}
+                {% assign current = ' style="background-color: #cccccc; border: 1px solid blue;"' %}
                 {% endif %}
-                <td{{ current }} width="150" align="center"><a href="{{ site.baseurl }}{{ entry.url }}" style="display: block;width: 150px">{{ entry.title
-                        }}</a></td>
+                {% if entry.title != 'Home' %}
+                <td{{ current }} width="150" align="center"><a href="{{ site.baseurl }}{{ entry.url }}" style="display: block;width: 150px">{{ entry.title}}</a></td>
+                    {% endif %}
                     {% endfor %}
             </tr>
+            {% if page.url == '/' %}
+            <tr>
+                <td></td>
+                {% for entry in site.data.navigation %}
+                {% if entry.title == 'Home' %}
+                <td ' style="background-color: #FFFFFF; font-weight: bold; border: 3px solid blue;"' width="150" align="center"><a href="{{ site.baseurl }}{{ entry.url }}" style="display: block;width: 150px">{{ entry.title}}</a></td>
+                {% endif %}
+                {% endfor %}
+                <td></td>
+            </tr>
+            {% endif %}
         </table>
     </center>
 </nav>
