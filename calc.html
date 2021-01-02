@@ -23,6 +23,9 @@ permalink: /calc
     <div class="calclabel">[<span id="inputidx">1</span>]:</div>
     <input id="inputbox" class="calccontent" type="text" height="200" onkeyup="monitorInput(event)">
 </div>
+<div>
+    <pre id="dbg"></pre>
+</div>
 
 <script>
     var itemCount = 1;
@@ -86,16 +89,18 @@ permalink: /calc
         item.appendChild(label);
         var content = document.createElement("div");
         content.className = "calchistory";
+        content.id = "history_out_" + itemCount + "_";
+        item.appendChild(content);
+        document.getElementById("history").append(item);
         if (inOut) {
             content.innerHTML = "<pre>" + text + "</pre>";
         } else if (successOut) {
-            content.innerHTML = "$$" + text + "$$";
+            content.innerHTML = "\\[" + text + "\\]";
+            document.getElementById("dbg").innerHTML = text;
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
         } else {
             content.innerHTML = "<span class='error'>" + text + "</span>";
         }
-        item.appendChild(content);
-        document.getElementById("history").append(item);
     }
     function setOutput(success, outputText) {
         createEntry(false, success, outputText);
