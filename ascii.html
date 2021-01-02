@@ -14,7 +14,7 @@ permalink: /ascii
         <td>
             <form action="https://us-west4-iotacalc.cloudfunctions.net/image" method="post" enctype="multipart/form-data" onsubmit="submitFiles(this); return false;">
                 <input id="filebox" class="tasctext" type="file" name="img" accept="image/*">
-                <input type="submit" value="Submit" />
+                <input id="imgsubmitbtn" type="submit" value="Submit" />
             </form>
         </td>
     </tr>
@@ -25,10 +25,12 @@ permalink: /ascii
 </div>
 
 <script>
+    var imageSubmissionInProgress = false;
     function setOutput(text, istext) {
         var e = document.getElementById("outputbox");
         e.className = istext ? "asctextout" : "ascimgout";
         e.innerHTML = text;
+        imageSubmissionInProgress = false;
     }
     function monitorInput(event) {
         if (event.key !== "Enter") return;
@@ -52,7 +54,9 @@ permalink: /ascii
 
     function submitFiles(theForm) {
         var file = document.getElementById("filebox").value;
-        if (!file) return;
+        if (!file || imageSubmissionInProgress) return;
+        imageSubmissionInProgress = true;
+        setOutput("It may take a few seconds, please be patient ... ...", true);
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () { handleResponse(this, false); };
         xhttp.open("POST", theForm.action);
