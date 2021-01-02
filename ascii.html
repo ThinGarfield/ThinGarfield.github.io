@@ -21,29 +21,31 @@ permalink: /ascii
 </table>
 <hr>
 <div class="asclabel">
-    <div id="outputbox" class="calcitem"></div>
+    <pre id="outputbox"></pre>
 </div>
 
 <script>
-    function setOutput(text) {
-        document.getElementById("outputbox").innerHTML = "<pre>" + text + "</pre>";
+    function setOutput(text, istext) {
+        var e = document.getElementById("outputbox");
+        e.className = istext ? "asctextout" : "ascimgout";
+        e.innerHTML = text;
     }
     function monitorInput(event) {
         if (event.key !== "Enter") return;
         createBanner(document.getElementById("inputbox").value);
     }
-    function handleResponse(xhttp) {
+    function handleResponse(xhttp, istext) {
         if (xhttp.readyState != 4) return;
         if (xhttp.status == 200) {
-            setOutput(xhttp.responseText);
+            setOutput(xhttp.responseText, istext);
         } else {
-            setOutput("Server error: " + xhttp.status + " / " + xhttp.statusText);
+            setOutput("Server error: " + xhttp.status + " / " + xhttp.statusText, true);
         }
     }
     function createBanner(inputText) {
         //inputText = inputText.replace("(", "%28").replace(")", "%29").replace("*", "%2A");
         var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function () { handleResponse(this); };
+        xhttp.onreadystatechange = function () { handleResponse(this, true); };
         xhttp.open("POST", "https://us-west4-iotacalc.cloudfunctions.net/banner");
         xhttp.send(inputText);
     }
@@ -52,7 +54,7 @@ permalink: /ascii
         var file = document.getElementById("filebox").value;
         if (!file) return;
         var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function () { handleResponse(this); };
+        xhttp.onreadystatechange = function () { handleResponse(this, false); };
         xhttp.open("POST", theForm.action);
         xhttp.send(new FormData(theForm));
     }

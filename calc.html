@@ -89,7 +89,6 @@ permalink: /calc
         if (inOut) {
             content.innerHTML = "<pre>" + text + "</pre>";
         } else if (successOut) {
-            alert(text);
             content.innerHTML = "$$" + text + "$$";
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
         } else {
