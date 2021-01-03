@@ -96,7 +96,7 @@ permalink: /calc
             content.innerHTML = "<pre>" + text + "</pre>";
         } else if (successOut) {
             content.innerHTML = "\\[" + text + "\\]";
-            document.getElementById("dbg").innerHTML = text;
+            //document.getElementById("dbg").innerHTML = text;
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
         } else {
             content.innerHTML = "<span class='error'>" + text + "</span>";
