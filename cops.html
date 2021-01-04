@@ -5,12 +5,19 @@ layout: default
 permalink: /cops
 ---
 <h3>Working in Progress...</h3>
-<canvas id="field"></canvas>
+<svg width="1000" height="600">
+    <rect width="300" height="100" onclick="onc()" style="fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)" />
+    <image href="assets/cop.png" height="100" x="100" y="200" />
+    <image href="assets/robber.png" height="100" x="300" y="200" />
+</svg>
 
 <script>
     function generateGraph() {
 
     }
 
+    function onc() {
+        alert("a");
+    }
     generateGraph();
 </script>
