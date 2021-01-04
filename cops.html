@@ -10,13 +10,35 @@ permalink: /cops
 
 <script>
     const svgns = "http://www.w3.org/2000/svg";
+    const kRobberImgPath = "assets/robber.png";
+    const kCopImgPath = "assets/cop.png";
+
+    // Logical coordinate: {x,y} where both x and y are between 1 and N
+    // inclusive, N = 10.
+    // Physical coordinate: {x,y} pixel offset on screen relative to the
+    // upper left corner of the svg area.
+    // Logical to physical translation is:
+    //   physical_coord = logical_coord * {kScaleX, kScaleY} + {kOffsetX, kOffsetY}
+    // using functions l2p(). The reverse function are p2lx() and p2l().
     const kScaleX = 140;
     const kScaleY = 120;
     const kOffsetX = 0;
     const kOffsetY = -50;
     const kRadius = 50;
-    const kRobberImgPath = "assets/robber.png";
-    const kCopImgPath = "assets/cop.png";
+
+    function logicalToPhysical(l) {
+        return { x: l.x * kScaleX + kOffsetX, y: l.y * kScaleY + kOffsetY };
+    }
+    function imgLogicalToPhysical(i) {
+        let pcenter = logicalToPhysical(i);
+        return { x: pcenter.x - 0.5 * kRadius, y: pcenter.y - 0.6 * kRadius };
+    }
+    function physicalToLogical(p) {
+        return {
+            x: Math.floor((p.x - kOffsetX + 0.5 * kScaleX) / kScaleX),
+            y: Math.floor((p.y - kOffsetY + 0.5 * kScaleY) / kScaleY)
+        };
+    }
 
     // The position of the robber and cops, as indices in the vertices array.
     let robberPos = 6;
@@ -43,15 +65,13 @@ permalink: /cops
         [2, 8], [1, 8]
     ];
 
-    function scaleX(x) { return x * kScaleX + kOffsetX; }
-    function scaleY(y) { return y * kScaleY + kOffsetY; }
-    function scaleImgX(x) { return scaleX(x) - 0.5 * kRadius; }
-    function scaleImgY(y) { return scaleY(y) - 0.6 * kRadius; }
 
+    // Draw the given vertex v={x,y} in logical coordinate.
     function drawOneVertex(v) {
         let c = document.createElementNS(svgns, "circle");
-        c.setAttribute("cx", scaleX(v.x));
-        c.setAttribute("cy", scaleY(v.y));
+        let pv = logicalToPhysical(v);
+        c.setAttribute("cx", pv.x);
+        c.setAttribute("cy", pv.y);
         c.setAttribute("r", kRadius);
         c.setAttribute("stroke", "blue");
         c.setAttribute("fill", "white");
@@ -59,22 +79,25 @@ permalink: /cops
     }
     function drawOneEdge(e) {
         let u = vertices[e[0]];
+        let pu = logicalToPhysical(u);
         let v = vertices[e[1]];
+        let pv = logicalToPhysical(v);
         let line = document.createElementNS(svgns, "line");
-        line.setAttribute("x1", scaleX(u.x));
-        line.setAttribute("y1", scaleY(u.y));
-        line.setAttribute("x2", scaleX(v.x));
-        line.setAttribute("y2", scaleY(v.y));
+        line.setAttribute("x1", pu.x);
+        line.setAttribute("y1", pu.y);
+        line.setAttribute("x2", pv.x);
+        line.setAttribute("y2", pv.y);
         line.setAttribute("style", "stroke: blue; stroke-width: 4");
         document.getElementById("svgroot").appendChild(line);
     }
     function drawCharacter(cop) {
         let u = vertices[cop ? copPos : robberPos];
+        let pu = imgLogicalToPhysical(u);
         let img = document.createElementNS(svgns, "image");
         img.setAttribute("id", cop ? "id_cop" : "id_robber");
         img.setAttribute("height", kRadius * 1.2);
-        img.setAttribute("x", scaleImgX(u.x));
-        img.setAttribute("y", scaleImgY(u.y));
+        img.setAttribute("x", pu.x);
+        img.setAttribute("y", pu.y);
         img.setAttribute("href", cop ? kCopImgPath : kRobberImgPath);
         document.getElementById("svgroot").appendChild(img);
     }
@@ -83,6 +106,36 @@ permalink: /cops
         vertices.forEach(drawOneVertex);
         drawCharacter(true);
         drawCharacter(false);
+    }
+
+    function getVertexId(phy_coord) {
+        let l_coord = physicalToLogical(phy_coord);
+        for (let i = 0; i < vertices.length; i++) {
+            if (l_coord.x == vertices[i].x && l_coord.y == vertices[i].y) {
+                console.log("Found " + l_coord);
+                return i;
+            }
+        }
+        return -1;
+    }
+    function moveTo(cid, v) {
+        if (cid == "id_robber") {
+            robberPos = v;
+        } else {
+            copPos = v;
+        }
+    }
+
+    function refreshCharacter(cid, v) {
+        let u = vertices[v];
+        let pu = imgLogicalToPhysical(u);
+        let e = document.getElementById(cid);
+        e.setAttribute("x", pu.x);
+        e.setAttribute("y", pu.y);
+    }
+    function refreshCharacters() {
+        refreshCharacter("id_cop", copPos);
+        refreshCharacter("id_robber", robberPos);
     }
 
     let selectedElement = false;
@@ -106,16 +159,27 @@ permalink: /cops
         function drag(evt) {
             if (selectedElement) {
                 evt.preventDefault();
-                var coord = getMousePosition(evt);
+                let coord = getMousePosition(evt);
                 selectedElement.setAttribute("x", coord.x - offset.x);
                 selectedElement.setAttribute("y", coord.y - offset.y);
             }
         }
         function endDrag(evt) {
-            selectedElement = null;
+            if (selectedElement) {
+                let s = selectedElement;
+                selectedElement = null;
+
+                evt.preventDefault();
+                let coord = getMousePosition(evt);
+                let v = getVertexId(coord);
+                if (v >= 0) {
+                    moveTo(s.id, v);
+                }
+                refreshCharacters();
+            }
         }
         function getMousePosition(evt) {
-            var CTM = svg.getScreenCTM();
+            let CTM = svg.getScreenCTM();
             return {
                 x: (evt.clientX - CTM.e) / CTM.a,
                 y: (evt.clientY - CTM.f) / CTM.d
