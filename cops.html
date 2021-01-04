@@ -4,20 +4,85 @@ description: Three cops and one robber run on a planar undirected graph. The cop
 layout: default
 permalink: /cops
 ---
-<h3>Working in Progress...</h3>
-<svg width="1000" height="600">
-    <rect width="300" height="100" onclick="onc()" style="fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)" />
-    <image href="assets/cop.png" height="100" x="100" y="200" />
-    <image href="assets/robber.png" height="100" x="300" y="200" />
+
+<svg id="svgroot" width="1000" height="700">
 </svg>
 
 <script>
-    function generateGraph() {
+    const svgns = "http://www.w3.org/2000/svg";
+    const kScaleX = 140;
+    const kScaleY = 120;
+    const kOffsetX = 0;
+    const kOffsetY = -50;
+    const kRadius = 50;
+    const kRobberImgPath = "assets/robber.png";
+    const kCopImgPath = "assets/cop.png";
 
+    // The position of the robber and cops, as indices in the vertices array.
+    let robberPos = 6;
+    let copPos = 1;
+
+    // The vertices of the graph.
+    let vertices = [
+        { x: 1, y: 1 },
+        { x: 4, y: 1 },
+        { x: 4, y: 4 },
+        { x: 1, y: 4 },
+        { x: 2, y: 2 },
+        { x: 3, y: 2 },
+        { x: 3, y: 3 },
+        { x: 2, y: 3 },
+        { x: 5, y: 4 },
+    ];
+    // The edges of the graph, each edge is represented as the from and to vertex
+    // index in the vertices array.
+    let edges = [
+        [0, 1], [1, 2], [2, 3], [3, 0],
+        [4, 5], [5, 6], [6, 7], [7, 4],
+        [0, 4], [1, 5], [2, 6], [3, 7],
+        [2, 8], [1, 8]
+    ];
+
+    function scaleX(x) { return x * kScaleX + kOffsetX; }
+    function scaleY(y) { return y * kScaleY + kOffsetY; }
+    function scaleImgX(x) { return scaleX(x) - 0.5 * kRadius; }
+    function scaleImgY(y) { return scaleY(y) - 0.6 * kRadius; }
+
+    function drawOneVertex(v) {
+        let c = document.createElementNS(svgns, "circle");
+        c.setAttribute("cx", scaleX(v.x));
+        c.setAttribute("cy", scaleY(v.y));
+        c.setAttribute("r", kRadius);
+        c.setAttribute("stroke", "blue");
+        c.setAttribute("fill", "white");
+        document.getElementById("svgroot").appendChild(c);
+    }
+    function drawOneEdge(e) {
+        let u = vertices[e[0]];
+        let v = vertices[e[1]];
+        let line = document.createElementNS(svgns, "line");
+        line.setAttribute("x1", scaleX(u.x));
+        line.setAttribute("y1", scaleY(u.y));
+        line.setAttribute("x2", scaleX(v.x));
+        line.setAttribute("y2", scaleY(v.y));
+        line.setAttribute("style", "stroke: blue; stroke-width: 4");
+        document.getElementById("svgroot").appendChild(line);
+    }
+    function drawCharacter(cop) {
+        let u = vertices[cop ? copPos : robberPos];
+        let img = document.createElementNS(svgns, "image");
+        img.setAttribute("height", kRadius * 1.2);
+        img.setAttribute("x", scaleImgX(u.x));
+        img.setAttribute("y", scaleImgY(u.y));
+        img.setAttribute("href", cop ? kCopImgPath : kRobberImgPath);
+        document.getElementById("svgroot").appendChild(img);
+    }
+    function drawGraph() {
+        edges.forEach(drawOneEdge);
+        vertices.forEach(drawOneVertex);
+        drawCharacter(true);
+        drawCharacter(false);
     }
 
-    function onc() {
-        alert("a");
-    }
-    generateGraph();
+    drawGraph();
 </script>
