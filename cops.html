@@ -40,10 +40,6 @@ permalink: /cops
         };
     }
 
-    // The position of the robber and cops, as indices in the vertices array.
-    let robberPos = 6;
-    let copPos = 1;
-
     // The vertices of the graph.
     let vertices = [
         { x: 1, y: 1 },
@@ -65,6 +61,61 @@ permalink: /cops
         [2, 8], [1, 8]
     ];
 
+    class GameCharacter {
+        constructor(vId, dId, img) {
+            this.vertexId = vId; // Position of this character, as index in the vertices array.
+            this.docId = dId;
+            this.imgPath = img;
+            this.create();
+            this.draw();
+        }
+        create() {
+            let img = document.createElementNS(svgns, "image");
+            img.setAttribute("id", this.docId);
+            img.setAttribute("height", kRadius * 1.2);
+            img.setAttribute("href", this.imgPath);
+            document.getElementById("svgroot").appendChild(img);
+        }
+        draw() {
+            let e = document.getElementById(this.docId);
+            let pu = imgLogicalToPhysical(vertices[this.vertexId]);
+            e.setAttribute("x", pu.x);
+            e.setAttribute("y", pu.y);
+        }
+        tryMoveTo(vId) {
+            if (vId >= 0) {
+                let isEdge = false;
+                for (let i = 0; i < edges.length; i++) {
+                    if ((vId == edges[i][0] && this.vertexId == edges[i][1]) ||
+                        (vId == edges[i][1] && this.vertexId == edges[i][0])) {
+                        isEdge = true;
+                        break;
+                    }
+                }
+                if (isEdge) {
+                    this.vertexId = vId;
+                    // TODO: more processing here.
+                }
+            }
+            this.draw();
+        }
+    }
+    class Robber extends GameCharacter {
+        constructor(v) {
+            super(v, "id_robber", kRobberImgPath);
+        }
+    }
+    class Cop extends GameCharacter {
+        constructor(v) {
+            super(v, "id_cop", kCopImgPath);
+        }
+    }
+
+    let selectedElement = false;
+    let offset = 0;
+    drawGraph();
+    let robber = new Robber(6);
+    let cop = new Cop(1);
 
     // Draw the given vertex v={x,y} in logical coordinate.
     function drawOneVertex(v) {
@@ -90,22 +141,9 @@ permalink: /cops
         line.setAttribute("style", "stroke: blue; stroke-width: 4");
         document.getElementById("svgroot").appendChild(line);
     }
-    function drawCharacter(cop) {
-        let u = vertices[cop ? copPos : robberPos];
-        let pu = imgLogicalToPhysical(u);
-        let img = document.createElementNS(svgns, "image");
-        img.setAttribute("id", cop ? "id_cop" : "id_robber");
-        img.setAttribute("height", kRadius * 1.2);
-        img.setAttribute("x", pu.x);
-        img.setAttribute("y", pu.y);
-        img.setAttribute("href", cop ? kCopImgPath : kRobberImgPath);
-        document.getElementById("svgroot").appendChild(img);
-    }
     function drawGraph() {
         edges.forEach(drawOneEdge);
         vertices.forEach(drawOneVertex);
-        drawCharacter(true);
-        drawCharacter(false);
     }
 
     function getVertexId(phy_coord) {
@@ -126,20 +164,6 @@ permalink: /cops
         }
     }
 
-    function refreshCharacter(cid, v) {
-        let u = vertices[v];
-        let pu = imgLogicalToPhysical(u);
-        let e = document.getElementById(cid);
-        e.setAttribute("x", pu.x);
-        e.setAttribute("y", pu.y);
-    }
-    function refreshCharacters() {
-        refreshCharacter("id_cop", copPos);
-        refreshCharacter("id_robber", robberPos);
-    }
-
-    let selectedElement = false;
-    let offset = 0;
     function makeDraggable(evt) {
         let svg = evt.target;
         svg.addEventListener('mousedown', startDrag);
@@ -166,16 +190,13 @@ permalink: /cops
         }
         function endDrag(evt) {
             if (selectedElement) {
-                let s = selectedElement;
+                let c = selectedElement.id == "id_robber" ? robber : cop;
                 selectedElement = null;
 
                 evt.preventDefault();
                 let coord = getMousePosition(evt);
                 let v = getVertexId(coord);
-                if (v >= 0) {
-                    moveTo(s.id, v);
-                }
-                refreshCharacters();
+                c.tryMoveTo(v);
             }
         }
         function getMousePosition(evt) {
@@ -186,5 +207,4 @@ permalink: /cops
             };
         }
     }
-    drawGraph();
 </script>
