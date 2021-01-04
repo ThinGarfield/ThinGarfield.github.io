@@ -5,7 +5,7 @@ layout: default
 permalink: /cops
 ---
 
-<svg id="svgroot" width="1000" height="700">
+<svg id="svgroot" width="1000" height="700" onload="makeDraggable(evt)">
 </svg>
 
 <script>
@@ -71,6 +71,7 @@ permalink: /cops
     function drawCharacter(cop) {
         let u = vertices[cop ? copPos : robberPos];
         let img = document.createElementNS(svgns, "image");
+        img.setAttribute("id", cop ? "id_cop" : "id_robber");
         img.setAttribute("height", kRadius * 1.2);
         img.setAttribute("x", scaleImgX(u.x));
         img.setAttribute("y", scaleImgY(u.y));
@@ -84,5 +85,42 @@ permalink: /cops
         drawCharacter(false);
     }
 
+    let selectedElement = false;
+    let offset = 0;
+    function makeDraggable(evt) {
+        let svg = evt.target;
+        svg.addEventListener('mousedown', startDrag);
+        svg.addEventListener('mousemove', drag);
+        svg.addEventListener('mouseup', endDrag);
+        svg.addEventListener('mouseleave', endDrag);
+
+        function startDrag(evt) {
+            if (evt.target.id === "id_cop" || event.target.id === "id_robber") {
+                selectedElement = evt.target;
+                offset = getMousePosition(evt);
+                offset.x -= parseFloat(selectedElement.getAttribute("x"));
+                offset.y -= parseFloat(selectedElement.getAttribute("y"));
+            }
+        }
+
+        function drag(evt) {
+            if (selectedElement) {
+                evt.preventDefault();
+                var coord = getMousePosition(evt);
+                selectedElement.setAttribute("x", coord.x - offset.x);
+                selectedElement.setAttribute("y", coord.y - offset.y);
+            }
+        }
+        function endDrag(evt) {
+            selectedElement = null;
+        }
+        function getMousePosition(evt) {
+            var CTM = svg.getScreenCTM();
+            return {
+                x: (evt.clientX - CTM.e) / CTM.a,
+                y: (evt.clientY - CTM.f) / CTM.d
+            };
+        }
+    }
     drawGraph();
 </script>
