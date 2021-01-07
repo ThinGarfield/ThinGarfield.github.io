@@ -9,6 +9,9 @@ permalink: /cops
 </svg>
 
 <script>
+    /////////////////////////////////////////////////////////////////////////////////////
+    // Constants and global variables
+    /////////////////////////////////////////////////////////////////////////////////////
     const svgns = "http://www.w3.org/2000/svg";
     const kRobberImgPath = "assets/robber.png";
     const kCopImgPath = "assets/cop.png";
@@ -24,43 +27,18 @@ permalink: /cops
     const kScaleY = 120;
     const kOffsetX = 0;
     const kOffsetY = -50;
-    const kRadius = 50;
+    const kRadiusRegular = 8;
+    const kImgHeight = 50;
 
-    function logicalToPhysical(l) {
-        return { x: l.x * kScaleX + kOffsetX, y: l.y * kScaleY + kOffsetY };
-    }
-    function imgLogicalToPhysical(i) {
-        let pcenter = logicalToPhysical(i);
-        return { x: pcenter.x - 0.5 * kRadius, y: pcenter.y - 0.6 * kRadius };
-    }
-    function physicalToLogical(p) {
-        return {
-            x: Math.floor((p.x - kOffsetX + 0.5 * kScaleX) / kScaleX),
-            y: Math.floor((p.y - kOffsetY + 0.5 * kScaleY) / kScaleY)
-        };
-    }
+    let characters = new Map(); // The game characters, name=>object.
+    let adj = [];    // The adjacency list. adj[i] is an array of vertexIds neighboring i.
 
-    // The vertices of the graph.
-    let vertices = [
-        { x: 1, y: 1 },
-        { x: 4, y: 1 },
-        { x: 4, y: 4 },
-        { x: 1, y: 4 },
-        { x: 2, y: 2 },
-        { x: 3, y: 2 },
-        { x: 3, y: 3 },
-        { x: 2, y: 3 },
-        { x: 5, y: 4 },
-    ];
-    // The edges of the graph, each edge is represented as the from and to vertex
-    // index in the vertices array.
-    let edges = [
-        [0, 1], [1, 2], [2, 3], [3, 0],
-        [4, 5], [5, 6], [6, 7], [7, 4],
-        [0, 4], [1, 5], [2, 6], [3, 7],
-        [2, 8], [1, 8]
-    ];
+    /////////////////////////////////////////////////////////////////////////////////////
+    // Class definitions
+    /////////////////////////////////////////////////////////////////////////////////////
 
+    // Base class for either Cop or Robber. Implements creation of the image element and moving
+    // on the graph.
     class GameCharacter {
         constructor(vId, dId, img) {
             this.vertexId = vId; // Position of this character, as index in the vertices array.
@@ -68,26 +46,29 @@ permalink: /cops
             this.imgPath = img;
             this.create();
             this.draw();
+            characters.set(this.docId, this);
         }
         create() {
             let img = document.createElementNS(svgns, "image");
             img.setAttribute("id", this.docId);
-            img.setAttribute("height", kRadius * 1.2);
+            img.setAttribute("height", kImgHeight * 1.2);
             img.setAttribute("href", this.imgPath);
             document.getElementById("svgroot").appendChild(img);
         }
         draw() {
             let e = document.getElementById(this.docId);
-            let pu = imgLogicalToPhysical(vertices[this.vertexId]);
+            let pu = imgLogicalToPhysical(graph.vertices[this.vertexId]);
             e.setAttribute("x", pu.x);
             e.setAttribute("y", pu.y);
         }
+        // If the given vertex id is one of the neighbors in the graph, move to it.
+        // Otherwise stay where it was before. Refresh the display either way.
         tryMoveTo(vId) {
             if (vId >= 0) {
                 let isEdge = false;
-                for (let i = 0; i < edges.length; i++) {
-                    if ((vId == edges[i][0] && this.vertexId == edges[i][1]) ||
-                        (vId == edges[i][1] && this.vertexId == edges[i][0])) {
+                for (let i = 0; i < graph.edges.length; i++) {
+                    if ((vId == graph.edges[i][0] && this.vertexId == graph.edges[i][1]) ||
+                        (vId == graph.edges[i][1] && this.vertexId == graph.edges[i][0])) {
                         isEdge = true;
                         break;
                     }
@@ -100,38 +81,106 @@ permalink: /cops
             this.draw();
         }
     }
+    // Represents a robber in the game.
     class Robber extends GameCharacter {
         constructor(v) {
             super(v, "id_robber", kRobberImgPath);
         }
     }
+    // Represents a cop in the game.
     class Cop extends GameCharacter {
         constructor(v) {
-            super(v, "id_cop", kCopImgPath);
+            super(v, "id_cop_" + v, kCopImgPath);
         }
     }
 
-    let selectedElement = false;
-    let offset = 0;
-    drawGraph();
-    let robber = new Robber(6);
-    let cop = new Cop(1);
+    class GameGraph {
+        constructor(data) {
+            this.vertices = data.vertices; // Take the vertices array directly from the data.
+            this.adj = []; // The adjacency list. adj[i] is an array of vertexIds neighboring i.
+            data.edges.forEach((e) => {
+                let u = e[0];
+                let v = e[1];
+                if (this.adj[u] === undefined) {
+                    this.adj[u] = [];
+                }
+                this.adj[u].push(v);
+                if (this.adj[v] === undefined) {
+                    this.adj[v] = [];
+                }
+                this.adj[v].push(u);
+            });
 
-    // Draw the given vertex v={x,y} in logical coordinate.
-    function drawOneVertex(v) {
+            this.characters = new Map(); // The game characters, name=>object.
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////
+    // Drawing and coordinate translation functions.
+    /////////////////////////////////////////////////////////////////////////////////////
+
+    function logicalToPhysical(l) {
+        return { x: l.x * kScaleX + kOffsetX, y: l.y * kScaleY + kOffsetY };
+    }
+    function imgLogicalToPhysical(i) {
+        let pcenter = logicalToPhysical(i);
+        return { x: pcenter.x - 0.5 * kImgHeight, y: pcenter.y - 0.6 * kImgHeight };
+    }
+    function physicalToLogical(p) {
+        return {
+            x: Math.floor((p.x - kOffsetX + 0.5 * kScaleX) / kScaleX),
+            y: Math.floor((p.y - kOffsetY + 0.5 * kScaleY) / kScaleY)
+        };
+    }
+
+    let graph = {
+        // The vertices of the graph.
+        vertices: [
+            { x: 1, y: 1 },
+            { x: 4, y: 1 },
+            { x: 4, y: 4 },
+            { x: 1, y: 4 },
+            { x: 2, y: 2 },
+            { x: 3, y: 2 },
+            { x: 3, y: 3 },
+            { x: 2, y: 3 },
+            { x: 5, y: 4 },
+        ],
+        // The edges of the graph, each edge is represented as the from and to vertex
+        // index in the vertices array.
+        edges: [
+            [0, 1], [1, 2], [2, 3], [3, 0],
+            [4, 5], [5, 6], [6, 7], [7, 4],
+            [0, 4], [1, 5], [2, 6], [3, 7],
+            [2, 8], [1, 8]
+        ],
+        robber: 6,
+        cops: [1, 2],
+    };
+
+
+    drawGraph();
+    // TODO: change creation to data driven
+    new Robber(graph.robber);
+    graph.cops.forEach((v) => new Cop(v));
+
+    // Draws the vertex of the given id.
+    function drawOneVertex(vertexId) {
         let c = document.createElementNS(svgns, "circle");
-        let pv = logicalToPhysical(v);
+        let pv = logicalToPhysical(graph.vertices[vertexId]);
+        c.setAttribute("id", "v_" + vertexId);
         c.setAttribute("cx", pv.x);
         c.setAttribute("cy", pv.y);
-        c.setAttribute("r", kRadius);
+        c.setAttribute("r", kRadiusRegular);
         c.setAttribute("stroke", "blue");
         c.setAttribute("fill", "white");
         document.getElementById("svgroot").appendChild(c);
     }
+    // Draws the given edge e=[e[0],e[1]] where both values are indices in the vertices array.
     function drawOneEdge(e) {
-        let u = vertices[e[0]];
+        let u = graph.vertices[e[0]];
         let pu = logicalToPhysical(u);
-        let v = vertices[e[1]];
+        let v = graph.vertices[e[1]];
         let pv = logicalToPhysical(v);
         let line = document.createElementNS(svgns, "line");
         line.setAttribute("x1", pu.x);
@@ -141,42 +190,49 @@ permalink: /cops
         line.setAttribute("style", "stroke: blue; stroke-width: 4");
         document.getElementById("svgroot").appendChild(line);
     }
+    // Draws the graph (without game characters).
     function drawGraph() {
-        edges.forEach(drawOneEdge);
-        vertices.forEach(drawOneVertex);
+        graph.edges.forEach(drawOneEdge);
+        for (let i = 0; i < graph.vertices.length; i++) {
+            drawOneVertex(i);
+        }
     }
 
+    // Given a physical coordinate {x,y}, returns the corresponding vertex id,
+    // if the coordinate is close enough to a valid vertex. Otherwise returns -1.
     function getVertexId(phy_coord) {
         let l_coord = physicalToLogical(phy_coord);
-        for (let i = 0; i < vertices.length; i++) {
-            if (l_coord.x == vertices[i].x && l_coord.y == vertices[i].y) {
+        for (let i = 0; i < graph.vertices.length; i++) {
+            if (l_coord.x == graph.vertices[i].x && l_coord.y == graph.vertices[i].y) {
                 console.log("Found " + l_coord);
                 return i;
             }
         }
         return -1;
     }
-    function moveTo(cid, v) {
-        if (cid == "id_robber") {
-            robberPos = v;
-        } else {
-            copPos = v;
-        }
-    }
 
+    // Implements the movements of the game characters using mouse drag-and-drop.
     function makeDraggable(evt) {
+        let selectedElement = false;
+        let selectedCharacter = false;
+        let offset = 0;
         let svg = evt.target;
+        let candidates = [];
+
         svg.addEventListener('mousedown', startDrag);
         svg.addEventListener('mousemove', drag);
         svg.addEventListener('mouseup', endDrag);
         svg.addEventListener('mouseleave', endDrag);
 
         function startDrag(evt) {
-            if (evt.target.id === "id_cop" || event.target.id === "id_robber") {
+            if (characters.has(evt.target.id)) {
                 selectedElement = evt.target;
+                selectedCharacter = characters.get(selectedElement.id);
                 offset = getMousePosition(evt);
                 offset.x -= parseFloat(selectedElement.getAttribute("x"));
                 offset.y -= parseFloat(selectedElement.getAttribute("y"));
+
+
             }
         }
 
@@ -189,14 +245,12 @@ permalink: /cops
             }
         }
         function endDrag(evt) {
-            if (selectedElement) {
-                let c = selectedElement.id == "id_robber" ? robber : cop;
-                selectedElement = null;
-
+            if (selectedCharacter) {
                 evt.preventDefault();
                 let coord = getMousePosition(evt);
                 let v = getVertexId(coord);
-                c.tryMoveTo(v);
+                selectedCharacter.tryMoveTo(v);
+                selectedElement = null;
             }
         }
         function getMousePosition(evt) {
