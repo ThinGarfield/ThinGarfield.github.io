@@ -6,6 +6,11 @@ permalink: /cops
 ---
 
 <svg id="svgroot" width="1000" height="700" onload="makeDraggable(evt)">
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="12" refY="3.5" orient="auto-start-reverse" fill="green">1
+            <polygon points="0 0, 8 3.5, 0 7" />
+        </marker>
+    </defs>
 </svg>
 
 <script>
@@ -110,6 +115,8 @@ permalink: /cops
             });
             this.drawGraph();
 
+            this.highlightedVertices = []; // The list of vertices currently highlighted.
+            this.highlightedEdges = []; // The list of edges currently highlighted.
             this.characters = new Map(); // The game characters, name=>object.
             this.characters.set("id_robber", new Robber(data.robber, "id_robber"));
             data.cops.forEach((v) => {
@@ -132,16 +139,21 @@ permalink: /cops
         }
         // Draws the given edge e=[e[0],e[1]] where both values are indices in the vertices array.
         drawOneEdge(e) {
-            let u = this.vertices[e[0]];
-            let pu = logicalToPhysical(u);
-            let v = this.vertices[e[1]];
-            let pv = logicalToPhysical(v);
+            let u = e[0];
+            let v = e[1];
+            if (u > v) {
+                [u, v] = [v, u];
+            }
+            let pu = logicalToPhysical(this.vertices[u]);
+            let pv = logicalToPhysical(this.vertices[v]);
             let line = document.createElementNS(svgns, "line");
+            line.setAttribute("id", this.getEdgeDocId(u, v));
             line.setAttribute("x1", pu.x);
             line.setAttribute("y1", pu.y);
             line.setAttribute("x2", pv.x);
             line.setAttribute("y2", pv.y);
-            line.setAttribute("style", "stroke: blue; stroke-width: 4");
+            line.setAttribute("stroke", "blue");
+            line.setAttribute("stroke-width", 3);
             document.getElementById("svgroot").appendChild(line);
         }
         // Draws the graph (without game characters).
@@ -153,7 +165,46 @@ permalink: /cops
                 this.drawOneVertex(i);
             }
         }
+        // Highlight the neighboring vertices of the given vertex.
+        highlightNeighbors(vertexId) {
+            if (this.adj[vertexId] === undefined) return;
+            for (let i = 0; i < this.adj[vertexId].length; i++) {
+                let v1 = vertexId;
+                let v2 = this.adj[vertexId][i];
+                let u = document.getElementById("v_" + v2);
+                u.setAttribute("stroke", "green");
+                u.setAttribute("r", kRadiusRegular * 2);
+                this.highlightedVertices.push(u);
 
+                let e = document.getElementById(this.getEdgeDocId(v1, v2));
+                e.setAttribute("stroke", "green");
+                if (v1 < v2) {
+                    e.setAttribute("marker-end", "url(#arrowhead)");
+                } else {
+                    e.setAttribute("marker-start", "url(#arrowhead)");
+                }
+                this.highlightedEdges.push(e);
+            }
+        }
+        stopHighlighting() {
+            while (this.highlightedVertices.length > 0) {
+                let u = this.highlightedVertices.pop();
+                u.setAttribute("stroke", "blue");
+                u.setAttribute("r", kRadiusRegular);
+            }
+            while (this.highlightedEdges.length > 0) {
+                let e = this.highlightedEdges.pop();
+                e.setAttribute("stroke", "blue");
+                e.setAttribute("marker-end", "");
+                e.setAttribute("marker-start", "");
+            }
+        }
+        getEdgeDocId(v1, v2) {
+            if (v1 > v2) {  // Make sure the smaller vertex id is first.
+                [v1, v2] = [v2, v1];
+            }
+            return "e_" + v1 + "_" + v2;
+        }
         // Given a physical coordinate {x,y}, returns the corresponding vertex id,
         // if the coordinate is close enough to a valid vertex. Otherwise returns -1.
         getVertexId(phy_coord) {
@@ -233,8 +284,7 @@ permalink: /cops
                 offset = getMousePosition(evt);
                 offset.x -= parseFloat(selectedElement.getAttribute("x"));
                 offset.y -= parseFloat(selectedElement.getAttribute("y"));
-
-
+                g.highlightNeighbors(selectedCharacter.vertexId);
             }
         }
 
@@ -247,6 +297,7 @@ permalink: /cops
             }
         }
         function endDrag(evt) {
+            g.stopHighlighting();
             if (selectedCharacter) {
                 evt.preventDefault();
                 let coord = getMousePosition(evt);
