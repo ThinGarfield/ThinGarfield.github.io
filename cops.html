@@ -7,7 +7,7 @@ permalink: /cops
 
 <svg id="svgroot" width="1000" height="700" onload="makeDraggable(evt)">
     <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="12" refY="3.5" orient="auto-start-reverse" fill="green">1
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="13" refY="3.5" orient="auto-start-reverse" fill="green">1
             <polygon points="0 0, 8 3.5, 0 7" />
         </marker>
     </defs>
@@ -28,6 +28,8 @@ permalink: /cops
     // Logical to physical translation is:
     //   physical_coord = logical_coord * {kScaleX, kScaleY} + {kOffsetX, kOffsetY}
     // using functions l2p(). The reverse function are p2lx() and p2l().
+    const kCanvasWidth = 1000;
+    const kAspectRatio = 1.4;
     const kScaleX = 140;
     const kScaleY = 120;
     const kOffsetX = 0;
@@ -38,6 +40,47 @@ permalink: /cops
     /////////////////////////////////////////////////////////////////////////////////////
     // Class definitions
     /////////////////////////////////////////////////////////////////////////////////////
+
+    class CoordinateScaler {
+        constructor(graph) {
+            this.xMin = 0;
+            this.yMin = 0;
+            this.xMax = 1;
+            this.yMax = 1;
+            this.unitWidth = 100;
+            this.unitHeight = 100;
+        }
+        initializeForGraph(graph) {
+            this.xMin = 1E10;
+            this.yMin = 1E10;
+            this.xMax = -this.xMin;
+            this.yMax = -this.yMin;
+            for (let i = 0; i < graph.vertices.length; i++) {
+                this.xMin = Math.min(this.xMin, graph.vertices[i].x);
+                this.xMax = Math.max(this.xMax, graph.vertices[i].x);
+                this.yMin = Math.min(this.yMin, graph.vertices[i].y);
+                this.yMax = Math.max(this.yMax, graph.vertices[i].y);
+            }
+            this.unitWidth = kCanvasWidth / (this.xMax - this.xMin + 1);
+            this.unitHeight = this.unitWidth / kAspectRatio;
+            console.log("Scaler: unitWidth=" + this.unitWidth + ", unitHeight=" + this.unitHeight
+                + ", xMin=" + this.xMin + ", xMax=" + this.xMax);
+        }
+        logicalToPhysical(l) {
+            return { x: (l.x - this.xMin + 0.5) * this.unitWidth, y: (l.y - this.yMin + 0.5) * this.unitHeight };
+        }
+        imgLogicalToPhysical(i) {
+            let pcenter = this.logicalToPhysical(i);
+            return { x: pcenter.x - 0.5 * kImgHeight, y: pcenter.y - 0.6 * kImgHeight };
+        }
+        physicalToLogical(p) {
+            return {
+                x: Math.floor((p.x / this.unitWidth + this.xMin)),
+                y: Math.floor((p.y / this.unitHeight + this.yMin))
+            };
+        }
+    }
+    let scaler = new CoordinateScaler();
 
     // Base class for either Cop or Robber. Implements creation of the image element and moving
     // on the graph.
@@ -54,11 +97,12 @@ permalink: /cops
             img.setAttribute("id", this.docId);
             img.setAttribute("height", kImgHeight * 1.2);
             img.setAttribute("href", this.imgPath);
+            img.setAttribute("opacity", 0.9);
             document.getElementById("svgroot").appendChild(img);
         }
         draw() {
             let e = document.getElementById(this.docId);
-            let pu = imgLogicalToPhysical(graph.vertices[this.vertexId]);
+            let pu = scaler.imgLogicalToPhysical(graph.vertices[this.vertexId]);
             e.setAttribute("x", pu.x);
             e.setAttribute("y", pu.y);
         }
@@ -128,7 +172,7 @@ permalink: /cops
         // Draws the vertex of the given id.
         drawOneVertex(vertexId) {
             let c = document.createElementNS(svgns, "circle");
-            let pv = logicalToPhysical(this.vertices[vertexId]);
+            let pv = scaler.logicalToPhysical(this.vertices[vertexId]);
             c.setAttribute("id", "v_" + vertexId);
             c.setAttribute("cx", pv.x);
             c.setAttribute("cy", pv.y);
@@ -144,8 +188,8 @@ permalink: /cops
             if (u > v) {
                 [u, v] = [v, u];
             }
-            let pu = logicalToPhysical(this.vertices[u]);
-            let pv = logicalToPhysical(this.vertices[v]);
+            let pu = scaler.logicalToPhysical(this.vertices[u]);
+            let pv = scaler.logicalToPhysical(this.vertices[v]);
             let line = document.createElementNS(svgns, "line");
             line.setAttribute("id", this.getEdgeDocId(u, v));
             line.setAttribute("x1", pu.x);
@@ -208,7 +252,7 @@ permalink: /cops
         // Given a physical coordinate {x,y}, returns the corresponding vertex id,
         // if the coordinate is close enough to a valid vertex. Otherwise returns -1.
         getVertexId(phy_coord) {
-            let l_coord = physicalToLogical(phy_coord);
+            let l_coord = scaler.physicalToLogical(phy_coord);
             for (let i = 0; i < this.vertices.length; i++) {
                 if (l_coord.x == this.vertices[i].x && l_coord.y == this.vertices[i].y) {
                     console.log("Found " + l_coord);
@@ -219,24 +263,7 @@ permalink: /cops
         }
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////
-    // Drawing and coordinate translation functions.
-    /////////////////////////////////////////////////////////////////////////////////////
-
-    function logicalToPhysical(l) {
-        return { x: l.x * kScaleX + kOffsetX, y: l.y * kScaleY + kOffsetY };
-    }
-    function imgLogicalToPhysical(i) {
-        let pcenter = logicalToPhysical(i);
-        return { x: pcenter.x - 0.5 * kImgHeight, y: pcenter.y - 0.6 * kImgHeight };
-    }
-    function physicalToLogical(p) {
-        return {
-            x: Math.floor((p.x - kOffsetX + 0.5 * kScaleX) / kScaleX),
-            y: Math.floor((p.y - kOffsetY + 0.5 * kScaleY) / kScaleY)
-        };
-    }
-
+    // Game data.
     let graph = {
         // The vertices of the graph.
         vertices: [
@@ -249,6 +276,7 @@ permalink: /cops
             { x: 3, y: 3 },
             { x: 2, y: 3 },
             { x: 5, y: 4 },
+            { x: 0, y: 4 }
         ],
         // The edges of the graph, each edge is represented as the from and to vertex
         // index in the vertices array.
@@ -256,12 +284,13 @@ permalink: /cops
             [0, 1], [1, 2], [2, 3], [3, 0],
             [4, 5], [5, 6], [6, 7], [7, 4],
             [0, 4], [1, 5], [2, 6], [3, 7],
-            [2, 8], [1, 8]
+            [2, 8], [1, 8], [0, 9], [3, 9],
         ],
         robber: 6,
         cops: [1, 2],
     };
 
+    scaler.initializeForGraph(graph);
     let g = new GameGraph(graph);
 
     // Implements the movements of the game characters using mouse drag-and-drop.
