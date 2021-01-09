@@ -5,7 +5,7 @@ layout: default
 permalink: /cops
 ---
 
-<svg id="svgroot" width="1000" height="700" onload="makeDraggable(evt)">
+<svg id="svgroot" width="1280" height="700" onload="makeDraggable(evt)">
     <defs>
         <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="13" refY="3.5" orient="auto-start-reverse" fill="green">1
             <polygon points="0 0, 8 3.5, 0 7" />
@@ -17,23 +17,63 @@ permalink: /cops
     /////////////////////////////////////////////////////////////////////////////////////
     // Constants
     /////////////////////////////////////////////////////////////////////////////////////
+    let graph = {
+        // The vertices of the graph.
+        vertices: [
+            { x: 1, y: 1 },
+            { x: 4, y: 1 },
+            { x: 4, y: 4 },
+            { x: 1, y: 4 },
+            { x: 2, y: 2 },
+            { x: 3, y: 2 },
+            { x: 3, y: 3 },
+            { x: 2, y: 3 },
+            { x: 5, y: 4 }, // idx=9
+            { x: 0, y: 4 },
+            { x: 5, y: 1 },
+            { x: 0, y: 1 },
+            { x: 5, y: 10 }, // idx=12
+            { x: 0, y: 10 },
+            { x: 1, y: 6 },
+            { x: 4, y: 6 },
+            { x: 4, y: 9 },
+            { x: 1, y: 9 },
+            { x: 2, y: 7 }, //idx=18
+            { x: 3, y: 7 },
+            { x: 3, y: 8 },
+            { x: 2, y: 8 },
+            { x: 5, y: 7 },
+            { x: 0, y: 8 }
+        ],
+        // The edges of the graph, each edge is represented as the from and to vertex
+        // index in the vertices array.
+        edges: [
+            [0, 1], [1, 2], [2, 3], [3, 0],
+            [4, 5], [5, 6], [6, 7], [7, 4],
+            [0, 4], [1, 5], [2, 6], [3, 7],
+            [2, 8], [1, 8], [0, 9], [3, 9],
+            [8, 9, 0, 0.5],
+            [1, 10], [0, 11], [10, 11, 0, -0.5],
+            [8, 22], [22, 12], [12, 8, 0.5],
+            [9, 23], [23, 13], [13, 9, -0.5], [12, 13],
+            [14, 15], [15, 16], [16, 17], [17, 14],
+            [9, 14], [8, 15], [16, 12], [17, 13],
+            [18, 19], [19, 20], [20, 21], [21, 18],
+            [14, 18], [15, 19], [16, 20], [17, 21],
+        ],
+        robber: 9,
+        cops: [1, 2],
+    };
+
+    /////////////////////////////////////////////////////////////////////////////////////
+    // Constants
+    /////////////////////////////////////////////////////////////////////////////////////
     const svgns = "http://www.w3.org/2000/svg";
     const kRobberImgPath = "assets/robber.png";
     const kCopImgPath = "assets/cop.png";
 
-    // Logical coordinate: {x,y} where both x and y are between 1 and N
-    // inclusive, N = 10.
-    // Physical coordinate: {x,y} pixel offset on screen relative to the
-    // upper left corner of the svg area.
-    // Logical to physical translation is:
-    //   physical_coord = logical_coord * {kScaleX, kScaleY} + {kOffsetX, kOffsetY}
-    // using functions l2p(). The reverse function are p2lx() and p2l().
-    const kCanvasWidth = 1000;
+    const kCanvasWidth = 1280;
     const kAspectRatio = 1.4;
-    const kScaleX = 140;
-    const kScaleY = 120;
-    const kOffsetX = 0;
-    const kOffsetY = -50;
     const kRadiusRegular = 8;
     const kImgHeight = 50;
 
@@ -41,6 +81,7 @@ permalink: /cops
     // Class definitions
     /////////////////////////////////////////////////////////////////////////////////////
 
+    // Implements the translation between logical and physical coordinates.
     class CoordinateScaler {
         constructor(graph) {
             this.xMin = 0;
@@ -61,13 +102,28 @@ permalink: /cops
                 this.yMin = Math.min(this.yMin, graph.vertices[i].y);
                 this.yMax = Math.max(this.yMax, graph.vertices[i].y);
             }
-            this.unitWidth = kCanvasWidth / (this.xMax - this.xMin + 1);
+            for (let i = 0; i < graph.edges.length; i++) {
+                let e = graph.edges[i];
+                if (e.length >= 3) {
+                    let xEdge = graph.vertices[e[0]].x + e[2];
+                    this.xMin = Math.min(this.xMin, xEdge);
+                    this.xMax = Math.max(this.xMax, xEdge);
+                }
+                if (e.length >= 4) {
+                    let yEdge = graph.vertices[e[0]].y + e[3];
+                    this.yMin = Math.min(this.yMin, yEdge);
+                    this.yMax = Math.max(this.yMax, yEdge);
+                }
+            }
+            this.unitWidth = kCanvasWidth / (this.xMax - this.xMin + 2);
             this.unitHeight = this.unitWidth / kAspectRatio;
+            let canvasHeight = this.unitHeight * (this.yMax - this.yMin + 2);
+            document.getElementById("svgroot").setAttribute("height", canvasHeight);
             console.log("Scaler: unitWidth=" + this.unitWidth + ", unitHeight=" + this.unitHeight
                 + ", xMin=" + this.xMin + ", xMax=" + this.xMax);
         }
         logicalToPhysical(l) {
-            return { x: (l.x - this.xMin + 0.5) * this.unitWidth, y: (l.y - this.yMin + 0.5) * this.unitHeight };
+            return { x: (l.x - this.xMin + 1) * this.unitWidth, y: (l.y - this.yMin + 1) * this.unitHeight };
         }
         imgLogicalToPhysical(i) {
             let pcenter = this.logicalToPhysical(i);
@@ -75,8 +131,8 @@ permalink: /cops
         }
         physicalToLogical(p) {
             return {
-                x: Math.floor((p.x / this.unitWidth + this.xMin)),
-                y: Math.floor((p.y / this.unitHeight + this.yMin))
+                x: Math.floor(p.x / this.unitWidth + this.xMin - 0.5),
+                y: Math.floor(p.y / this.unitHeight + this.yMin - 0.5)
             };
         }
     }
@@ -190,12 +246,51 @@ permalink: /cops
             }
             let pu = scaler.logicalToPhysical(this.vertices[u]);
             let pv = scaler.logicalToPhysical(this.vertices[v]);
-            let line = document.createElementNS(svgns, "line");
+
+            // Check if the path connecting the vertices is straight line or poly-line.
+            // It's straight line if dx=dy=0. It's poly-line if either is non-zero.
+            // They are not allowed to be both non-zero.
+            let dx = 0;
+            let dy = 0;
+            if (e.length >= 3 && this.vertices[u].x === this.vertices[v].x) {
+                dx = e[2];
+            }
+            if (e.length >= 4 && this.vertices[u].y === this.vertices[v].y) {
+                dy = e[3];
+            }
+            if (dx !== 0 && dy !== 0) {
+                dx = dy = 0;
+            }
+
+            let line = false;
+            if (dx === 0 && dy === 0) {
+                line = document.createElementNS(svgns, "line");
+                line.setAttribute("x1", pu.x);
+                line.setAttribute("y1", pu.y);
+                line.setAttribute("x2", pv.x);
+                line.setAttribute("y2", pv.y);
+            } else {
+                let u1 = false;
+                let v1 = false;
+                if (dx !== 0) {
+                    let x = this.vertices[u].x;
+                    let dir = (this.vertices[u].y < this.vertices[v].y) ? 1 : -1;
+                    u1 = { x: x + dx, y: this.vertices[u].y + dir };
+                    v1 = { x: x + dx, y: this.vertices[v].y - dir };
+                } else {
+                    let y = this.vertices[u].y;
+                    let dir = (this.vertices[u].x < this.vertices[v].x) ? 1 : -1;
+                    u1 = { x: this.vertices[u].x + dir, y: y + dy };
+                    v1 = { x: this.vertices[v].x - dir, y: y + dy };
+                }
+                line = document.createElementNS(svgns, "polyline");
+                line.setAttribute("fill", "none");
+                let pu1 = scaler.logicalToPhysical(u1);
+                let pv1 = scaler.logicalToPhysical(v1);
+                line.setAttribute("points", "" + pu.x + "," + pu.y + " " + pu1.x + "," + pu1.y
+                    + " " + pv1.x + "," + pv1.y + " " + pv.x + "," + pv.y);
+            }
             line.setAttribute("id", this.getEdgeDocId(u, v));
-            line.setAttribute("x1", pu.x);
-            line.setAttribute("y1", pu.y);
-            line.setAttribute("x2", pv.x);
-            line.setAttribute("y2", pv.y);
             line.setAttribute("stroke", "blue");
             line.setAttribute("stroke-width", 3);
             document.getElementById("svgroot").appendChild(line);
@@ -262,33 +357,6 @@ permalink: /cops
             return -1;
         }
     }
-
-    // Game data.
-    let graph = {
-        // The vertices of the graph.
-        vertices: [
-            { x: 1, y: 1 },
-            { x: 4, y: 1 },
-            { x: 4, y: 4 },
-            { x: 1, y: 4 },
-            { x: 2, y: 2 },
-            { x: 3, y: 2 },
-            { x: 3, y: 3 },
-            { x: 2, y: 3 },
-            { x: 5, y: 4 },
-            { x: 0, y: 4 }
-        ],
-        // The edges of the graph, each edge is represented as the from and to vertex
-        // index in the vertices array.
-        edges: [
-            [0, 1], [1, 2], [2, 3], [3, 0],
-            [4, 5], [5, 6], [6, 7], [7, 4],
-            [0, 4], [1, 5], [2, 6], [3, 7],
-            [2, 8], [1, 8], [0, 9], [3, 9],
-        ],
-        robber: 6,
-        cops: [1, 2],
-    };
 
     scaler.initializeForGraph(graph);
     let g = new GameGraph(graph);
