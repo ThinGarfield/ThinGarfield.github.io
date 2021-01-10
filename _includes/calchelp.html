@@ -7,8 +7,18 @@ Currently supported operations:
     <li><code>x!!</code> &nbsp; : &nbsp; means the double-factorial of $x$</li>
     <li><code>\binom{n}{k}</code> &nbsp; : &nbsp; $\binom{n}{k}$</li>
     <li><code>\frac{a}{b}</code> &nbsp; : &nbsp; $\frac{a}{b}$</li>
+    <li><code>a \times b</code>, <code>a \cdot b</code>, <code>a * b</code>&nbsp; : &nbsp; all means multiplication</li>
     <li><code>gcd(a,b)</code> &nbsp; : &nbsp; the greatest common divisor, supporting more than 2 arguments.</li>
     <li><code>lcm(a,b)</code> &nbsp; : &nbsp; the least common multiple, supporting more than 2 arguments.</li>
     <li><code>isprime(n)</code>&nbsp; : &nbsp; whether $n$ is a prime number</li>
     <li><code>nextprime(n)</code>&nbsp; : &nbsp; the smallest prime number greater than $n$</li>
+    <li><code>a mod b</code> or <code>a \pmod{b}</code> : &nbsp; $a \pmod{b}$. Note that
+        <ul>
+            <li>$b$ must be positive integer.</li>
+            <li> the <code>mod</code>
+                operator has lower precendence than arithmetic operators, <code>x + y mod m</code> means
+                $(x+y)\pmod{m}$.</li>
+            <li><code>a / b mod m</code> means $a \cdot b^{-1} \pmod{m}$</li>
+        </ul>
+    </li>
 </ul>
