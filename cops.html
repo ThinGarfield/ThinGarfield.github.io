@@ -4,7 +4,21 @@ description: Three cops and one robber run on a planar undirected graph. The cop
 layout: default
 permalink: /cops
 ---
-
+<div id="gameovercallout" class="gameovercallout" onclick="gameoverCalloutOff()">
+    <div class="callout-header">The robber is caught!</div>
+    <span class="closebtn" onclick="this.parentElement.style.display='none';">×</span>
+    <div class="callout-container">
+        <p>Congratulations!
+        <p> Click anywhere to restart the game.
+    </div>
+</div>
+<table width="1280">
+    <tr>
+        <td>It's <span id="currentchar"></span>'s turn to move. Drag the character to a new position, or click on "Skip Turn".</td>
+        <td><button onclick="g.skipTurn()">Skip Turn</button></td>
+        </rd>
+    </tr>
+</table>
 <svg id="svgroot" width="1280" height="700" onload="makeDraggable(evt)">
     <defs>
         <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="13" refY="3.5" orient="auto-start-reverse" fill="green">1
@@ -162,6 +176,10 @@ permalink: /cops
             e.setAttribute("x", pu.x);
             e.setAttribute("y", pu.y);
         }
+        setVertexId(vId) {
+            this.vertexId = vId;
+            this.draw();
+        }
         // If the given vertex id is one of the neighbors in the graph, move to it.
         // Otherwise stay where it was before. Refresh the display either way.
         tryMoveTo(vId) {
@@ -176,7 +194,7 @@ permalink: /cops
                 }
                 if (isEdge) {
                     this.vertexId = vId;
-                    // TODO: more processing here.
+                    g.advanceToNextCharacter();
                 }
             }
             this.draw();
@@ -198,6 +216,7 @@ permalink: /cops
     // Represents the game graph - vertices, edges, adjacency lists, and game characters.
     class GameGraph {
         constructor(data) {
+            this.currentTurn = "id_robber"; // whose turn to move.
             this.vertices = data.vertices; // Take the vertices array directly from the data.
             this.edges = data.edges;
             this.adj = []; // The adjacency list. adj[i] is an array of vertexIds neighboring i.
@@ -218,11 +237,24 @@ permalink: /cops
             this.highlightedVertices = []; // The list of vertices currently highlighted.
             this.highlightedEdges = []; // The list of edges currently highlighted.
             this.characters = new Map(); // The game characters, name=>object.
+            this.originalPos = new Map(); // The game characters, name=>vertex id. Used in resetAll.
             this.characters.set("id_robber", new Robber(data.robber, "id_robber"));
-            data.cops.forEach((v) => {
-                let docId = "id_cop_" + v;
+            this.originalPos.set("id_robber", data.robber);
+            for (let i = 0; i < data.cops.length; i++) {
+                let v = data.cops[i];
+                let docId = "id_cop_" + i;
                 this.characters.set(docId, new Cop(v, docId));
-            });
+                this.originalPos.set(docId, v);
+            }
+            this.showCurrentTurn();
+        }
+        resetAll() {
+            this.originalPos.forEach((v, docId) => {
+                console.log("resetAll: " + docId + ", " + v + ", " + this.characters.get(docId));
+                this.characters.get(docId).setVertexId(v);
+            }, this);
+            this.currentTurn = "id_robber";
+            this.showCurrentTurn();
         }
 
         // Draws the vertex of the given id.
@@ -304,6 +336,40 @@ permalink: /cops
                 this.drawOneVertex(i);
             }
         }
+        showCurrentTurn() {
+            document.getElementById("currentchar").innerHTML = (this.currentTurn === "id_robber" ? "robber" : "cop");
+            this.highlightNeighbors(this.characters.get(this.currentTurn).vertexId);
+        }
+        skipTurn() {
+            this.advanceToNextCharacter();
+        }
+        advanceToNextCharacter() {
+            this.stopHighlighting();
+            if (this.checkCaught()) return;
+
+            if (this.currentTurn === "id_robber") {
+                this.currentTurn = "id_cop_0";
+            } else if (this.currentTurn.substring(0, 7) === "id_cop_") {
+                let n = Number(this.currentTurn.substring(7));
+                if (n >= this.characters.size - 2) {
+                    this.currentTurn = "id_robber";
+                } else {
+                    this.currentTurn = "id_cop_" + (n + 1);
+                }
+            }
+
+            this.showCurrentTurn();
+        }
+        checkCaught() {
+            let robberPos = this.characters.get("id_robber").vertexId;
+            for (let i = 0; i < this.characters.size - 1; i++) {
+                if (robberPos === this.characters.get("id_cop_" + i).vertexId) {
+                    gameoverCalloutOn();
+                    return true;
+                }
+            }
+            return false;
+        }
         // Highlight the neighboring vertices of the given vertex.
         highlightNeighbors(vertexId) {
             if (this.adj[vertexId] === undefined) return;
@@ -375,13 +441,13 @@ permalink: /cops
         svg.addEventListener('mouseleave', endDrag);
 
         function startDrag(evt) {
-            if (g.characters.has(evt.target.id)) {
+            if (g.currentTurn === evt.target.id) {
                 selectedElement = evt.target;
                 selectedCharacter = g.characters.get(selectedElement.id);
                 offset = getMousePosition(evt);
                 offset.x -= parseFloat(selectedElement.getAttribute("x"));
                 offset.y -= parseFloat(selectedElement.getAttribute("y"));
-                g.highlightNeighbors(selectedCharacter.vertexId);
+                //g.highlightNeighbors(selectedCharacter.vertexId);
             }
         }
 
@@ -394,8 +460,8 @@ permalink: /cops
             }
         }
         function endDrag(evt) {
-            g.stopHighlighting();
-            if (selectedCharacter) {
+            //g.stopHighlighting();
+            if (selectedElement && selectedCharacter) {
                 evt.preventDefault();
                 let coord = getMousePosition(evt);
                 let v = g.getVertexId(coord);
@@ -410,5 +476,14 @@ permalink: /cops
                 y: (evt.clientY - CTM.f) / CTM.d
             };
         }
+    }
+
+    function gameoverCalloutOn() {
+        document.getElementById("gameovercallout").style.display = "block";
+    }
+
+    function gameoverCalloutOff() {
+        document.getElementById("gameovercallout").style.display = "none";
+        g.resetAll();
     }
 </script>

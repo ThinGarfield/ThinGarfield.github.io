@@ -12,7 +12,9 @@ Currently supported operations:
     <li><code>lcm(a,b)</code> &nbsp; : &nbsp; the least common multiple. Supports arbitrary number of arguments.</li>
     <li><code>isprime(n)</code>&nbsp; : &nbsp; whether $n$ is a prime number</li>
     <li><code>nextprime(n)</code>&nbsp; : &nbsp; the smallest prime number greater than $n$</li>
-    <li><code>a mod b</code> or <code>a \pmod{b}</code> &nbsp; : $a \pmod{b}$. Note that
+    <li><code>factor(n)</code>&nbsp; : &nbsp; the prime factorization of $n$</li>
+    <li><code>adic(p,n)</code>&nbsp; : &nbsp; the p-adic number $v_p(n)$, where $p$ must be a prime </li>
+    <li><code>a mod b</code> or <code>a \pmod{b}</code> &nbsp; : &nbsp; $a \pmod{b}$. Note that
         <ul>
             <li>$b$ must be positive integer.</li>
             <li> the <code>mod</code>
@@ -21,7 +23,7 @@ Currently supported operations:
             <li><code>a / b mod m</code> means $a \cdot b^{-1} \pmod{m}$</li>
         </ul>
     </li>
-    <li><code>jacobi(a,b)</code> or <code>kronecker(a,b)</code> &nbsp; : both mean the Kronecker symbol
+    <li><code>jacobi(a,b)</code> or <code>kronecker(a,b)</code> &nbsp; : &nbsp; both mean the Kronecker symbol
         $\begin{pmatrix} a \cr \hdashline b \cr \end{pmatrix}$.
         Note when $b$ is an odd integer, Kronecker symbol is same as Jacobi symbol.
     </li>
