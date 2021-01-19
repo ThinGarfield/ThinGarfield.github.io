@@ -4,6 +4,7 @@ description: Three cops and one robber run on a planar undirected graph. The cop
 layout: default
 permalink: /cops
 ---
+
 <div id="gameovercallout" class="gameovercallout" onclick="gameoverCalloutOff()">
     <div class="callout-header">The robber is caught!</div>
     <span class="closebtn" onclick="this.parentElement.style.display='none';">×</span>
@@ -12,13 +13,12 @@ permalink: /cops
         <p> Click anywhere to restart the game.
     </div>
 </div>
-<table width="1280">
-    <tr>
-        <td>It's <span id="currentchar"></span>'s turn to move. Drag the character to a new position, or click on "Skip Turn".</td>
-        <td><button onclick="g.skipTurn()">Skip Turn</button></td>
-        </rd>
-    </tr>
-</table>
+<center>
+    It's <b><span id="currentchar"></span></b>'s turn to move.
+    Drag the character to a new position, or click on the intended new position,
+    or click on "Skip Turn".
+    <button onclick="g.skipTurn()">Skip Turn</button>
+</center>
 <svg id="svgroot" width="1280" height="700" onload="makeDraggable(evt)">
     <defs>
         <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="13" refY="3.5" orient="auto-start-reverse" fill="green">1
@@ -137,7 +137,7 @@ permalink: /cops
                 + ", xMin=" + this.xMin + ", xMax=" + this.xMax);
         }
         logicalToPhysical(l) {
-            return { x: (l.x - this.xMin + 1) * this.unitWidth, y: (l.y - this.yMin + 1) * this.unitHeight };
+            return { x: (l.x - this.xMin + 1) * this.unitWidth, y: (l.y - this.yMin + 0.5) * this.unitHeight };
         }
         imgLogicalToPhysical(i) {
             let pcenter = this.logicalToPhysical(i);
@@ -146,7 +146,7 @@ permalink: /cops
         physicalToLogical(p) {
             return {
                 x: Math.floor(p.x / this.unitWidth + this.xMin - 0.5),
-                y: Math.floor(p.y / this.unitHeight + this.yMin - 0.5)
+                y: Math.floor(p.y / this.unitHeight + this.yMin)
             };
         }
     }
@@ -183,8 +183,8 @@ permalink: /cops
         // If the given vertex id is one of the neighbors in the graph, move to it.
         // Otherwise stay where it was before. Refresh the display either way.
         tryMoveTo(vId) {
+            let isEdge = false;
             if (vId >= 0) {
-                let isEdge = false;
                 for (let i = 0; i < graph.edges.length; i++) {
                     if ((vId == graph.edges[i][0] && this.vertexId == graph.edges[i][1]) ||
                         (vId == graph.edges[i][1] && this.vertexId == graph.edges[i][0])) {
@@ -198,6 +198,7 @@ permalink: /cops
                 }
             }
             this.draw();
+            return isEdge;
         }
     }
     // Represents a robber in the game.
@@ -441,10 +442,17 @@ permalink: /cops
         svg.addEventListener('mouseleave', endDrag);
 
         function startDrag(evt) {
+            // First, if it's direct click on the move to position, do it and return.
+            let coord = getMousePosition(evt);
+            let v = g.getVertexId(coord);
+            let c = g.characters.get(g.currentTurn);
+            if (c && c.tryMoveTo(v)) return;
+
+            // Otherwise, treat it as start dragging.
             if (g.currentTurn === evt.target.id) {
                 selectedElement = evt.target;
                 selectedCharacter = g.characters.get(selectedElement.id);
-                offset = getMousePosition(evt);
+                offset = coord;
                 offset.x -= parseFloat(selectedElement.getAttribute("x"));
                 offset.y -= parseFloat(selectedElement.getAttribute("y"));
                 //g.highlightNeighbors(selectedCharacter.vertexId);
