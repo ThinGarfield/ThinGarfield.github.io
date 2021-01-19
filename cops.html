@@ -14,10 +14,26 @@ permalink: /cops
     </div>
 </div>
 <center>
-    It's <b><span id="currentchar"></span></b>'s turn to move.
-    Drag the character to a new position, or click on the intended new position,
-    or click on "Skip Turn".
-    <button onclick="g.skipTurn()">Skip Turn</button>
+    <table class="gamesetupselect">
+        <tr>
+            <td width="100"></td>
+            <td>Select a game board setup : &nbsp;</td>
+            <td class="gamesetupchoice" id="gameselect0" onclick="selectGame(0)">Bottle Trap</td>
+            <td class="gamesetupchoice" id="gameselect1" onclick="selectGame(1)">Grid Horizon</td>
+            <td class="gamesetupchoice" id="gameselect2" onclick="selectGame(2)">Sideway Escape</td>
+        </tr>
+        <tr>
+            <td></td>
+        </tr>
+    </table>
+
+    <div>
+        <p>
+            It's <b><span id="currentchar"></span></b>'s turn to move.
+            Drag the character to a new position, or click on the intended new position,
+            or click on "Skip Turn".
+            <button onclick="g.skipTurn()">Skip Turn</button>
+    </div>
 </center>
 <svg id="svgroot" width="1280" height="700" onload="makeDraggable(evt)">
     <defs>
@@ -36,7 +52,7 @@ permalink: /cops
     const kRobberImgPath = "assets/robber.png";
     const kCopImgPath = "assets/cop.png";
 
-    const kCanvasWidth = 1280;
+    const kCanvasWidth = 1230;
     const kAspectRatio = 1.4;
     const kRadiusRegular = 8;
     const kImgHeight = 50;
@@ -47,7 +63,7 @@ permalink: /cops
 
     // Implements the translation between logical and physical coordinates.
     class CoordinateScaler {
-        constructor(graph) {
+        constructor() {
             this.xMin = 0;
             this.yMin = 0;
             this.xMax = 1;
@@ -87,7 +103,7 @@ permalink: /cops
                 + ", xMin=" + this.xMin + ", xMax=" + this.xMax);
         }
         logicalToPhysical(l) {
-            return { x: (l.x - this.xMin + 1) * this.unitWidth, y: (l.y - this.yMin + 0.5) * this.unitHeight };
+            return { x: (l.x - this.xMin + 0.5) * this.unitWidth, y: (l.y - this.yMin + 0.5) * this.unitHeight };
         }
         imgLogicalToPhysical(i) {
             let pcenter = this.logicalToPhysical(i);
@@ -95,7 +111,7 @@ permalink: /cops
         }
         physicalToLogical(p) {
             return {
-                x: Math.floor(p.x / this.unitWidth + this.xMin - 0.5),
+                x: Math.floor(p.x / this.unitWidth + this.xMin),
                 y: Math.floor(p.y / this.unitHeight + this.yMin)
             };
         }
@@ -167,6 +183,11 @@ permalink: /cops
     // Represents the game graph - vertices, edges, adjacency lists, and game characters.
     class GameGraph {
         constructor(data) {
+            let svgroot = document.getElementById("svgroot");
+            while (svgroot.children.length > 1) {
+                svgroot.removeChild(svgroot.lastChild);
+            }
+
             this.currentTurn = "id_robber"; // whose turn to move.
             this.vertices = data.vertices; // Take the vertices array directly from the data.
             this.edges = data.edges;
@@ -275,7 +296,7 @@ permalink: /cops
             }
             line.setAttribute("id", this.getEdgeDocId(u, v));
             line.setAttribute("stroke", "blue");
-            line.setAttribute("stroke-width", 3);
+            line.setAttribute("stroke-width", 2);
             document.getElementById("svgroot").appendChild(line);
         }
         // Draws the graph (without game characters).
@@ -375,9 +396,22 @@ permalink: /cops
         }
     }
 
-    scaler.initializeForGraph(graph);
-    let g = new GameGraph(graph);
+    let selectedGraphId = false;
+    let graph = false;
+    let g = false;
 
+    function selectGame(selectionId) {
+        selectedGraphId = selectionId;
+        graph = gameGraphs[selectedGraphId];
+        scaler.initializeForGraph(graph);
+        g = new GameGraph(graph);
+
+        for (let i = 0; i < gameGraphs.length; i++) {
+            let className = (i === selectionId ? "gamesetuphighlighted" : "gamesetupchoice");
+            document.getElementById("gameselect" + i).className = className;
+        }
+    }
+    selectGame(0);
     // Implements the movements of the game characters using mouse drag-and-drop.
     function makeDraggable(evt) {
         let selectedElement = false;

@@ -1,5 +1,5 @@
 
-let graph = {
+let gameGraph0 = {
     // The vertices of the graph.
     vertices: [
         { x: 1, y: 1 },
@@ -46,3 +46,37 @@ let graph = {
     robber: 9,
     cops: [1, 2],
 };
+
+// A simple sqaure grid.
+const gameGraph1Size = 9;
+let gameGraph1 = {
+    vertices: [],
+    edges: [],
+    robber: Math.floor(gameGraph1Size * gameGraph1Size / 2),
+    cops: [0, gameGraph1Size - 1, gameGraph1Size * gameGraph1Size -1],
+};
+let gameGraph2 = {
+    vertices: [],
+    edges: [],
+    robber: Math.floor(gameGraph1Size * gameGraph1Size / 2),
+    cops: [0, gameGraph1Size - 1, gameGraph1Size * gameGraph1Size -1],
+};
+for (let r = 0; r < gameGraph1Size; r++) {
+    for (let c = 0; c < gameGraph1Size; c++) {
+        gameGraph1.vertices.push({ x : c, y : r });
+        gameGraph2.vertices.push({ x : c, y : r });
+        if (c != 0) {
+            gameGraph1.edges.push([r * gameGraph1Size + c - 1, r * gameGraph1Size + c]);
+            gameGraph2.edges.push([r * gameGraph1Size + c - 1, r * gameGraph1Size + c]);
+        }
+        if (r != 0) {
+            gameGraph1.edges.push([(r - 1) * gameGraph1Size + c, r * gameGraph1Size + c]);
+            gameGraph2.edges.push([(r - 1) * gameGraph1Size + c, r * gameGraph1Size + c]);
+        }
+        if (r != 0 && c != gameGraph1Size - 1) {
+            gameGraph2.edges.push([(r - 1) * gameGraph1Size + c + 1, r * gameGraph1Size + c]);
+        }
+    }
+}
+
+let gameGraphs = [gameGraph0, gameGraph1, gameGraph2];
