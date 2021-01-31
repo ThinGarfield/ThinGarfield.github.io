@@ -1,32 +1,102 @@
-Currently supported operations:
-<ul>
-    <li>normal <code>+, -, *, /</code> &nbsp; : &nbsp; following common sense operator precedence.
-    </li>
-    <li><code>x^y</code> &nbsp; : &nbsp; $x^y$ </li>
-    <li><code>x!</code> &nbsp; : &nbsp; the factorial of $x$</li>
-    <li><code>x!!</code> &nbsp; : &nbsp; means the double-factorial of $x$</li>
-    <li><code>\binom{n}{k}</code> &nbsp; : &nbsp; $\binom{n}{k}$</li>
-    <li><code>\frac{a}{b}</code> &nbsp; : &nbsp; $\frac{a}{b}$</li>
-    <li><code>a \times b</code>, <code>a \cdot b</code>, <code>a * b</code>&nbsp; : &nbsp; all means multiplication</li>
-    <li><code>gcd(a,b)</code> &nbsp; : &nbsp; the greatest common divisor. Supports arbitrary number of arguments.</li>
-    <li><code>lcm(a,b)</code> &nbsp; : &nbsp; the least common multiple. Supports arbitrary number of arguments.</li>
-    <li><code>isprime(n)</code>&nbsp; : &nbsp; whether $n$ is a prime number</li>
-    <li><code>nextprime(n)</code>&nbsp; : &nbsp; the smallest prime number greater than $n$</li>
-    <li><code>factor(n)</code>&nbsp; : &nbsp; the prime factorization of $n$</li>
-    <li><code>adic(p,n)</code>&nbsp; : &nbsp; the p-adic number $v_p(n)$, where $p$ must be a prime </li>
-    <li><code>a mod b</code> or <code>a \pmod{b}</code> &nbsp; : &nbsp; $a \pmod{b}$. Note that
-        <ul>
-            <li>$b$ must be positive integer.</li>
-            <li> the <code>mod</code>
-                operator has lower precendence than arithmetic operators, <code>x + y mod m</code> means
-                $(x+y)\pmod{m}$.</li>
-            <li><code>a / b mod m</code> means $a \cdot b^{-1} \pmod{m}$</li>
-        </ul>
-    </li>
-    <li><code>jacobi(a,b)</code> or <code>kronecker(a,b)</code> &nbsp; : &nbsp; both mean the Kronecker symbol
-        $\begin{pmatrix} a \cr \hdashline b \cr \end{pmatrix}$.
-        Note when $b$ is an odd integer, Kronecker symbol is same as Jacobi symbol.
-    </li>
-    <li><code>totient(n)</code>&nbsp; : &nbsp; The Euler's totient function $\varphi(n)$</li>
-    <li><code>floor(x), ceil(x)</code>&nbsp; : &nbsp; The floor $\lfloor x \rfloor$ and ceil $\lceil x \rceil$.</li>
-</ul>
+<table style="border-spacing: 0px;padding:0px;">
+    <tr>
+        <th class="calchelptable">Operation</th>
+        <th class="calchelptable">Examples</th>
+        <th class="calchelptable">Explanation</th>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code></td>
+        <td class="calchelptable"> <code>3*45</code></td>
+        <td class="calchelptable">Arithmetic, observes common sense operator precedence</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>a \times b</code>, <code>a \cdot b</code></td>
+        <td class="calchelptable"> <code>3\times 45</code></td>
+        <td class="calchelptable">Multiplication, same as a*b</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>\frac{a}{b}</code></td>
+        <td class="calchelptable"> <code>\frac{5}{12}</code>, <code>\frac23</code></td>
+        <td class="calchelptable">$\frac{a}{b}$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>x^y</code></td>
+        <td class="calchelptable"> <code>3^100</code></td>
+        <td class="calchelptable">$x^y$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>n!</code>, <code>n!!</code></td>
+        <td class="calchelptable"> <code>16!</code></td>
+        <td class="calchelptable">The factorial and double factorial of $n$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>\binom{n}{k}</code></td>
+        <td class="calchelptable"> <code>\binom{15}{3}</code>, <code>\binom84</code></td>
+        <td class="calchelptable">The binomial coefficient $\binom{n}{k}$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>gcd(a,b)</code>, <code>lcm(a,b)</code></td>
+        <td class="calchelptable"> <code>gcd(12,15)</code>, <code>lcm(3,5,8)</code></td>
+        <td class="calchelptable">The greatest common divisor, and the least common multiple. Supports arbitrary number of arguments.</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>isprime(n)</code></td>
+        <td class="calchelptable"> <code>isprime(2^16+1)</code></td>
+        <td class="calchelptable">Whether $n$ is a prime number</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>nextprime(n)</code></td>
+        <td class="calchelptable"> <code>nextprime(2^16+1)</code></td>
+        <td class="calchelptable">The smallest prime number $>n$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>nextprimes(n, k)</code></td>
+        <td class="calchelptable"> <code>nextprimes(11, 5)</code></td>
+        <td class="calchelptable">The $k$ smallest prime numbers $>n$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>primelist(a, b)</code></td>
+        <td class="calchelptable"> <code>primelist(100, 200)</code></td>
+        <td class="calchelptable">All prime number $p$ such that $a \leq p \leq n$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>factor(n)</code></td>
+        <td class="calchelptable"> <code>primelist(100, 200)</code></td>
+        <td class="calchelptable">The prime factorization of $n$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>adic(p, n)</code></td>
+        <td class="calchelptable"> <code>adic(3, 10^6-1)</code></td>
+        <td class="calchelptable">The p-adic number $v_p(n)$, where $p$ must be a prime</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>totient(n)</code></td>
+        <td class="calchelptable"> <code>totient(24)</code></td>
+        <td class="calchelptable">The Euler's totient function $\varphi(n)$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>floor(x)</code>, <code>ceil(x)</code></td>
+        <td class="calchelptable"> <code>floor(35/8)</code></td>
+        <td class="calchelptable">The floor $\lfloor x \rfloor$ and ceil $\lceil x \rceil$</td>
+    </tr>
+    <tr>
+        <td class="calchelptable"> <code>a mod b</code> or <code>a \pmod{b}</code> </td>
+        <td class="calchelptable"> <code>2^100 mod 3</code></td>
+        <td class="calchelptable">$a \pmod{b}$. Note that
+            <ul>
+                <li>$b$ must be positive integer.</li>
+                <li> the <code>mod</code>
+                    operator has lower precendence than arithmetic operators, <code>x + y mod m</code> means
+                    $(x+y)\pmod{m}$.</li>
+                <li><code>a / b mod m</code> means $a \cdot b^{-1} \pmod{m}$</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td class="calchelptable"><code>jacobi(a,b)</code> or <code>kronecker(a,b)</code></td>
+        <td class="calchelptable"> <code>jacobi(21, 5)</code></td>
+        <td class="calchelptable">Both mean the Kronecker symbol
+            $\begin{pmatrix} a \cr \hdashline b \cr \end{pmatrix}$.
+            Note when $b$ is an odd integer, Kronecker symbol is same as Jacobi symbol.</td>
+    </tr>
+</table>
