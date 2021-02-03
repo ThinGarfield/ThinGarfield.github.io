@@ -1,0 +1,123 @@
+---
+title: The 24 Game
+description: Use arithmetics to make 24!
+layout: default
+permalink: /24
+---
+<button onclick="createGame()">Next Game</button>
+<div id="dbg" class="calchistory"></div>
+
+
+<script>
+    class Digit {
+        constructor(op, a, b, v) {
+            this.operator = op;
+            this.a = a;
+            this.b = b;
+            this.value = v;
+        }
+        // Output this in LaTeX format.
+        // parent: the operator of the parent node.
+        // left: true if this is the left node of the parent node.
+        toLatex(parent, left) {
+            let useParen = false;
+            if (parent !== null) {
+                if (this.operator === "*" || this.operator === "/") {
+                    useParen = parent === "/" && !left;
+                } else if (this.operator === "+" || this.operator === "-") {
+                    useParen = parent === "*" || parent === "/" || (parent === "-" && !left);
+                }
+                else {
+                    useParen = true;
+                }
+            }
+
+            if (this.operator !== null) {
+                let op = this.operator;
+                if (op === "*") {
+                    op = "\\times ";
+                } else if (op === "/") {
+                    op = "\\div ";
+                }
+                return (useParen ? "(" : "") + this.a.toLatex(this.operator, true) +
+                    op + this.b.toLatex(this.operator, false) + (useParen ? ")" : "");
+            } else {
+                return this.value;
+            }
+        }
+        toString() { return this.toLatex(null, true); }
+    }
+    function solveNextStep(digits, i, j, d) {
+        let next = [];
+        for (let k = 0; k < digits.length; k++) {
+            if (k != i && k != j) {
+                next.push(digits[k]);
+            }
+        }
+        next.push(d);
+        return solve(next);
+    }
+    function solve(digits) {
+        //console.log(digits.toString() + (digits.length == 1 ? (" = " + digits[0].value.toString()) : ""));
+        if (digits.length == 1) {
+            //console.log(digits[0].serialize());
+            return digits[0].value == 24 ? digits[0] : null;
+        }
+
+        for (let i = 0; i < digits.length - 1; i++) {
+            let a = digits[i];
+            for (let j = i + 1; j < digits.length; j++) {
+                let b = digits[j];
+
+                let ret = solveNextStep(digits, i, j, new Digit("+", a, b, a.value + b.value));
+                if (ret !== null) return ret;
+
+                ret = solveNextStep(digits, i, j, new Digit("*", a, b, a.value * b.value));
+                if (ret !== null) return ret;
+
+                ret = solveNextStep(digits, i, j, new Digit("-", a, b, a.value - b.value));
+                if (ret !== null) return ret;
+
+                ret = solveNextStep(digits, i, j, new Digit("-", b, a, b.value - a.value));
+                if (ret !== null) return ret;
+
+                if (b.value != 0 && a.value % b.value == 0) {
+                    ret = solveNextStep(digits, i, j, new Digit("/", a, b, a.value / b.value));
+                    if (ret !== null) return ret;
+                }
+
+                if (a.value != 0 && b.value % a.value == 0) {
+                    ret = solveNextStep(digits, i, j, new Digit("/", b, a, b.value / a.value));
+                    if (ret !== null) return ret;
+                }
+            }
+        }
+        return null;
+    }
+    function createGame() {
+        let digits = [];
+        let solution = null;
+        while (true) {
+            for (let i = 0; i < 4; i++) {
+                digits[i] = new Digit(null, null, null, 1 + Math.floor(Math.random() * 9));
+            }
+            solution = solve(digits);
+            if (solution !== null) {
+                break;
+            }
+        }
+        let text = "";
+        for (let i = 0; i < digits.length; i++) {
+            text += digits[i].value + ", "
+        }
+        text += " $\\Longrightarrow ";
+        text += solution;
+        text += "$";
+
+        let content = document.getElementById("dbg");
+        content.innerHTML = text;
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
+    }
+
+    createGame();
+</script>
