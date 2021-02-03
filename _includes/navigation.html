@@ -26,17 +26,6 @@
                     {% endif %}
                     {% endfor %}
             </tr>
-            {% if page.url == '/' %}
-            <tr>
-                <td></td>
-                {% for entry in site.data.navigation %}
-                {% if entry.title == 'Home' %}
-                <td colspan="2" style="background-color: #FFFFFF; font-weight: bold; border: 3px solid blue;"' width="150" align="center"><a href="{{ site.baseurl }}{{ entry.url }}" style="display: block;width: 150px">{{ entry.title}}</a></td>
-                {% endif %}
-                {% endfor %}
-                <td></td>
-            </tr>
-            {% endif %}
         </table>
     </center>
 </nav>
