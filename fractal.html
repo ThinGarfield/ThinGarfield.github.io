@@ -6,52 +6,126 @@ permalink: /fractal
 ---
 
 <div>
+    <p>
+        How it works: for $z\in \mathbb C$, define $f_z(a)=a^2+z$, and
+        $f_z^{(n)}(a) = f_z \left( f_z \left( \cdots f_z(a) \cdots\right) \right) $ where $f_z$ is applied
+        $n$ times. Given a threshold $M\in \mathbb R^+$, for each $z=x+yi\in \mathbb C$,
+        compute the smallest $n$ such that $\bigm|f_z^{(n)}(0)\bigm| > M$, and assign the color at
+        coordinates $(x,y)$ according to the value of $n$. And Voila!
+    </p>
+    <p>
+        Below you can adjust the size, the maximum number of iterations (default value 500),
+        the threshold $M$, and the color palette by using the sliders. The computation runs in
+        your browser, be patient, it may take a few sections after you release the slider for the image
+        to update. (Tip: smaller image size runs faster.)
+    </p>
+</div>
+<div>
+    <table>
+        <tr>
+            <th>Image Size = <span id="imgSizeVal">960*600</span></th>
+            <th>Max Iterations = <span id="maxIterVal">500</span></th>
+            <th>Threshold $M$ = <span id="thresholdVal">4.0</span></th>
+            <th>Color Palette = <span id="colorVal">0</span></th>
+        </tr>
+        <tr>
+            <td><input type="range" min="400" max="1600" value="600" class="slider" oninput="onSizeInput(this.value)" onchange=" onSizeChange(this.value)"></td>
+            <td><input type="range" min="500" max="5000" value="500" class="slider" oninput="onMaxIterationInput(this.value)" onchange="onMaxIterationChange(this.value)"></td>
+            <td><input type="range" min="200" max="600" value="400" class="slider" oninput="onThresholdInput(this.value)" onchange=" onThresholdChange(this.value)"></td>
+            <td><input type="range" min="0" max="100" value="0" class="slider" oninput="onColorInput(this.value)" onchange=" onColorChange(this.value)"></td>
+        </tr>
+    </table>
+</div>
+
+<div>
     <canvas id="mandelbrot" class="fractal" width="960" height="600">
     </canvas>
 </div>
 
 <script>
-    let canvas = document.getElementById('mandelbrot');
+    const byteSquared = 256 * 256;
+    const byteCubed = 256 * 256 * 256;
+    let threshold = 4.0;
+    let colorOffset = 0.5;
+    let maxIterations = 500;
+    showMandelbrot();
 
-    // The boundary of the logical coordinates (x,y) in the complex plane.
-    const ymin = -1;
-    const ymax = 1;
-    const xmax = 1;
-    let xmin = 1 - (ymax - ymin) / canvas.height * canvas.width;
+    function onSizeInput(v) {
+        document.getElementById("imgSizeVal").innerHTML = Math.floor(v * 1.6).toString() + "*" + v.toString();
+    }
+    function onSizeChange(v) {
+        let canvas = document.getElementById('mandelbrot');
+        canvas.height = v;
+        canvas.width = Math.floor(v * 1.6);
+        showMandelbrot();
+    }
+    function onMaxIterationInput(v) {
+        document.getElementById("maxIterVal").innerHTML = v;
+    }
+    function onMaxIterationChange(v) {
+        maxIterations = v;
+        showMandelbrot();
+    }
+    function onThresholdInput(v) {
+        document.getElementById("thresholdVal").innerHTML = v / 100;
+    }
+    function onThresholdChange(v) {
+        threshold = v / 100;
+        showMandelbrot();
+    }
+    function onColorInput(v) {
+        document.getElementById("colorVal").innerHTML = v / 100;
+    }
+    function onColorChange(v) {
+        colorOffset = v / 100;
+        showMandelbrot();
+    }
 
-    // Get the image data and pixels array from the canvas, in order to draw on it.
-    let ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    let imgdata = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let pixels = imgdata.data;
+    function showMandelbrot() {
+        let canvas = document.getElementById('mandelbrot');
 
-    // (px, py) are the physical coordinates on the canvas.
-    for (let px = 0; px < canvas.width; px++)
-        for (let py = 0; py < canvas.height; py++) {
-            // Calculates the logical coordinates (cx, cy) from the physical coord (px, py).
-            let cx = px / canvas.width * (xmax - xmin) + xmin;
-            let cy = py / canvas.height * (ymax - ymin) + ymin;
-            let idx = (py * imgdata.width + px) * 4;
-            // Computes the color value at (x,y) and draw it on the canvas.
-            drawPixel(cx, cy, idx);
+        // The boundary of the logical coordinates (x,y) in the complex plane.
+        const ymin = -1;
+        const ymax = 1;
+        const xmax = 1;
+        let xmin = 1 - (ymax - ymin) / canvas.height * canvas.width;
+
+        // Get the image data and pixels array from the canvas, in order to draw on it.
+        let ctx = canvas.getContext('2d');
+        ctx.globalAlpha = 0.2;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let imgdata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let pixels = imgdata.data;
+
+        // (px, py) are the physical coordinates on the canvas.
+        for (let px = 0; px < canvas.width; px++) {
+            for (let py = 0; py < canvas.height; py++) {
+                // Calculates the logical coordinates (cx, cy) from the physical coord (px, py).
+                let cx = px / canvas.width * (xmax - xmin) + xmin;
+                let cy = py / canvas.height * (ymax - ymin) + ymin;
+                let idx = (py * imgdata.width + px) * 4;
+                // Computes the color value at (x,y) and draw it on the canvas.
+                drawPixel(pixels, cx, cy, idx);
+            }
         }
-    // Everything above just updates the image data, this performs the actual drawing.
-    ctx.putImageData(imgdata, 0, 0);
-
+        // Everything above just updates the image data, this performs the actual drawing.
+        ctx.putImageData(imgdata, 0, 0);
+    }
     // Computes the Mandelbrot value at (x, y),
     // and sets the color in the pixels array at idx.
-    function drawPixel(cx, cy, idx) {
-        const maxIterations = 5000;
+    function drawPixel(pixels, cx, cy, idx) {
         let x = 0;
         let y = 0;
         let i = 0;
-        for (; i < maxIterations && x * x + y * y <= 4; i++) {
+        for (; i < maxIterations && x * x + y * y <= threshold; i++) {
             let x1 = x * x - y * y + cx;
             y = 2 * x * y + cy;
             x = x1;
         }
-        i *= (256 * 256 * 256 / 5000);
-        var r = Math.floor(i / (256 * 256));
+        i = (i + maxIterations * colorOffset) % maxIterations;
+
+        i *= (byteCubed / maxIterations);
+        var r = Math.floor(i / byteSquared);
         var g = Math.floor((i / 256) % 256);
         var b = Math.floor(i % 256);
         pixels[idx] = r;
