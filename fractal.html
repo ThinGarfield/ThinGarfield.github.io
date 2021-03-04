@@ -1,0 +1,62 @@
+---
+title: Fractal - Mandelbrot Set
+description: The beautiful Mandelbrot set.
+layout: default
+permalink: /fractal
+---
+
+<div>
+    <canvas id="mandelbrot" class="fractal" width="960" height="600">
+    </canvas>
+</div>
+
+<script>
+    let canvas = document.getElementById('mandelbrot');
+
+    // The boundary of the logical coordinates (x,y) in the complex plane.
+    const ymin = -1;
+    const ymax = 1;
+    const xmax = 1;
+    let xmin = 1 - (ymax - ymin) / canvas.height * canvas.width;
+
+    // Get the image data and pixels array from the canvas, in order to draw on it.
+    let ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let imgdata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let pixels = imgdata.data;
+
+    // (px, py) are the physical coordinates on the canvas.
+    for (let px = 0; px < canvas.width; px++)
+        for (let py = 0; py < canvas.height; py++) {
+            // Calculates the logical coordinates (cx, cy) from the physical coord (px, py).
+            let cx = px / canvas.width * (xmax - xmin) + xmin;
+            let cy = py / canvas.height * (ymax - ymin) + ymin;
+            let idx = (py * imgdata.width + px) * 4;
+            // Computes the color value at (x,y) and draw it on the canvas.
+            drawPixel(cx, cy, idx);
+        }
+    // Everything above just updates the image data, this performs the actual drawing.
+    ctx.putImageData(imgdata, 0, 0);
+
+    // Computes the Mandelbrot value at (x, y),
+    // and sets the color in the pixels array at idx.
+    function drawPixel(cx, cy, idx) {
+        const maxIterations = 5000;
+        let x = 0;
+        let y = 0;
+        let i = 0;
+        for (; i < maxIterations && x * x + y * y <= 4; i++) {
+            let x1 = x * x - y * y + cx;
+            y = 2 * x * y + cy;
+            x = x1;
+        }
+        i *= (256 * 256 * 256 / 5000);
+        var r = Math.floor(i / (256 * 256));
+        var g = Math.floor((i / 256) % 256);
+        var b = Math.floor(i % 256);
+        pixels[idx] = r;
+        pixels[idx + 1] = g;
+        pixels[idx + 2] = b;
+        pixels[idx + 3] = 255;
+    }
+</script>
