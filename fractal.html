@@ -44,7 +44,7 @@ permalink: /fractal
 
 <script>
     const byteSquared = 256 * 256;
-    const byteCubed = 256 * 256 * 256;
+    const byteCubed = 256 * 256 * 256 - 1;
     let threshold = 4.0;
     let colorOffset = 0.5;
     let maxIterations = 500;
@@ -98,7 +98,6 @@ permalink: /fractal
 
         // Get the image data and pixels array from the canvas, in order to draw on it.
         let ctx = canvas.getContext('2d');
-        ctx.globalAlpha = 0.2;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         let imgdata = ctx.getImageData(0, 0, canvas.width, canvas.height);
         let pixels = imgdata.data;
@@ -130,9 +129,9 @@ permalink: /fractal
             y = 2 * x * y + cy;
             x = x1;
         }
-        i = (i + maxIterations * colorOffset) % maxIterations;
+        i = (maxIterations - i) * byteCubed / maxIterations;
+        i = (i + colorOffset * byteCubed) % (byteCubed + 1);
 
-        i *= (byteCubed / maxIterations);
         var r = Math.floor(i / byteSquared);
         var g = Math.floor((i / 256) % 256);
         var b = Math.floor(i % 256);
