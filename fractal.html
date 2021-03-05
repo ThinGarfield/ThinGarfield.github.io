@@ -19,11 +19,12 @@ permalink: /fractal
         your browser, be patient, it may take a few sections after you release the slider for the image
         to update. (Tip: smaller image size runs faster.)
     </p>
+    <p>Double click on the image to zoom in. Double click while holding "Shift" key to zoom out. Drag the image to move.</p>
 </div>
 <div>
     <table>
         <tr>
-            <th>Image Size = <span id="imgSizeVal">960*600</span></th>
+            <th>Image Size = <span id="imgSizeVal">900*600</span></th>
             <th>Max Iterations = <span id="maxIterVal">500</span></th>
             <th>Threshold $M$ = <span id="thresholdVal">4.0</span></th>
             <th>Color Palette = <span id="colorVal">0</span></th>
@@ -38,16 +39,26 @@ permalink: /fractal
 </div>
 
 <div>
-    <canvas id="mandelbrot" class="fractal" width="960" height="600">
+    <canvas id="mandelbrot" class="fractal" width="960" height="600" ondblclick="onZoomIn(event)" onmousedown="onStartDrag(event)" onmouseup="onEndDrag(event)">
     </canvas>
 </div>
 
 <script>
+    // Used in translating iteration number into color values.
     const byteSquared = 256 * 256;
     const byteCubed = 256 * 256 * 256 - 1;
-    let threshold = 4.0;
-    let colorOffset = 0.5;
+    const aspectRatio = 1.5; // width:height ratio
+    const zoomRatio = 4; // ratio in each step of zoom in/out.
+    let threshold = 4.0; // The threshold M.
+    let colorOffset = 0.0; // The color palette seed.
     let maxIterations = 500;
+
+    // The boundary of the logical coordinates (x,y) in the complex plane.
+    let ymin = -1;
+    let ymax = 1;
+    let xmax = 1;
+    let xmin = 1 - 2 * aspectRatio;
+
     showMandelbrot();
 
     function onSizeInput(v) {
@@ -56,7 +67,7 @@ permalink: /fractal
     function onSizeChange(v) {
         let canvas = document.getElementById('mandelbrot');
         canvas.height = v;
-        canvas.width = Math.floor(v * 1.6);
+        canvas.width = Math.floor(v * aspectRatio);
         showMandelbrot();
     }
     function onMaxIterationInput(v) {
@@ -81,6 +92,40 @@ permalink: /fractal
         showMandelbrot();
     }
 
+    // Used in start/end drag event handlers.
+    let isInDrag = false;
+    let startDragX = 0;
+    let startDragY = 0;
+
+    function onZoomIn(event) {
+        isInDrag = false;
+        let zoomOut = event.getModifierState("Shift"); // Check whether shift-key is down.
+        let canvas = document.getElementById('mandelbrot');
+        let x = event.offsetX / canvas.width * (xmax - xmin) + xmin;
+        let y = event.offsetY / canvas.height * (ymax - ymin) + ymin;
+        let w = zoomOut ? (xmax - xmin) * zoomRatio : (xmax - xmin) / zoomRatio;
+        let h = zoomOut ? (ymax - ymin) * zoomRatio : (ymax - ymin) / zoomRatio;
+        xmax = x + w / 2; xmin = x - w / 2;
+        ymax = y + h / 2; ymin = y - h / 2;
+        showMandelbrot();
+    }
+    function onStartDrag(event) {
+        isInDrag = true;
+        startDragX = event.offsetX;
+        startDragY = event.offsetY;
+    }
+    function onEndDrag(event) {
+        if (isInDrag) {
+            isInDrag = false;
+            let canvas = document.getElementById('mandelbrot');
+            let xDiff = (event.offsetX - startDragX) / canvas.width * (xmax - xmin);
+            let yDiff = (event.offsetY - startDragY) / canvas.height * (ymax - ymin);
+            xmax -= xDiff; xmin -= xDiff;
+            ymax -= yDiff; ymin -= yDiff;
+            showMandelbrot();
+        }
+    }
+
     function showMandelbrot() {
         document.body.style.cursor = 'wait';
         document.getElementById('mandelbrot').style.opacity = "0.3";
@@ -89,12 +134,6 @@ permalink: /fractal
 
     function showMandelbrotWork() {
         let canvas = document.getElementById('mandelbrot');
-
-        // The boundary of the logical coordinates (x,y) in the complex plane.
-        const ymin = -1;
-        const ymax = 1;
-        const xmax = 1;
-        let xmin = 1 - (ymax - ymin) / canvas.height * canvas.width;
 
         // Get the image data and pixels array from the canvas, in order to draw on it.
         let ctx = canvas.getContext('2d');
