@@ -82,6 +82,12 @@ permalink: /fractal
     }
 
     function showMandelbrot() {
+        document.body.style.cursor = 'wait';
+        document.getElementById('mandelbrot').style.opacity = "0.3";
+        setTimeout(showMandelbrotWork, 50);
+    }
+
+    function showMandelbrotWork() {
         let canvas = document.getElementById('mandelbrot');
 
         // The boundary of the logical coordinates (x,y) in the complex plane.
@@ -110,6 +116,8 @@ permalink: /fractal
         }
         // Everything above just updates the image data, this performs the actual drawing.
         ctx.putImageData(imgdata, 0, 0);
+        document.body.style.cursor = 'default';
+        document.getElementById('mandelbrot').style.opacity = "1.0";
     }
     // Computes the Mandelbrot value at (x, y),
     // and sets the color in the pixels array at idx.
