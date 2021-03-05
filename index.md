@@ -1,6 +1,6 @@
 ---
-layout: default
-permalink: /
+redirect:   /fractal
+layout:     redirect
 ---
 
 This site is working in progress. I'll be adding more interesting projects. Use the navigation bar above to see what interests you.

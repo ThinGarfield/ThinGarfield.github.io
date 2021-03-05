@@ -1,6 +1,9 @@
 - title: Home
   url: /
 
+- title: Fractal
+  url: /fractal
+  
 - title: Calc
   url: /calc
 
@@ -16,5 +19,3 @@
 - title: Cops & Robbers
   url: /cops
 
-- title: Fractal
-  url: /fractal
