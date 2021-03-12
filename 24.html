@@ -7,8 +7,141 @@ permalink: /24
 <button onclick="createGame()">Next Game</button>
 <div id="dbg" class="calchistory"></div>
 
+<svg width="500" height="500">
+    <!-- R1=100, R2=200, sector degrees: n1=-40 to 40, n2=50 to 130, n3=140 to 220, n4=230 to 310 -->
+    <path id="num0" d="M 353,71 A 200,200 0 0,1 353,328 L 277,264 A 100,100 0 0,0 277,136 Z" fill="#012356" onclick="onClickNum(0)" />
+    <path id="num1" d="M 328,353 A 200,200 0 0,1 71,353 L 136,277 A 100,100 0 0,0 264,277 Z" fill="#012356" onclick="onClickNum(1)" />
+    <path id="num2" d="M 47,328 A 200,200 0 0,1 47,71 L 123,136 A 100,100 0 0,0 123,264 Z" fill="#012356" onclick="onClickNum(2)" />
+    <path id="num3" d="M 71,47 A 200,200 0 0,1 328,47 L 264,123 A 100,100 0 0,0 136,123 Z" fill="#012356" onclick="onClickNum(3)" />
+
+    <!-- R=80, move=+5/-5, sector degrees: 0,90,180,270 -->
+    <path id="op0" d="M 285,205 A 80,80 0 0,1 205,285 L 205,205 Z" fill="#c48944" onclick="onClickOp(0)" />
+    <path id="op1" d="M 195,285 A 80,80 0 0,1 115,205 L 195,205 Z" fill="#c48944" onclick="onClickOp(1)" />
+    <path id="op2" d="M 115,195 A 80,80 0 0,1 195,115 L 195,195 Z" fill="#c48944" onclick="onClickOp(2)" />
+    <path id="op3" d="M 205,115 A 80,80 0 0,1 285,195 L 205,195 Z" fill="#c48944" onclick="onClickOp(3)" />
+
+    <text x="240" y="260" class="txtop24" onclick="onClickOp(0)">&divide;</text>
+    <text x="160" y="260" class="txtop24" onclick="onClickOp(1)">&times;</text>
+    <text x="160" y="180" class="txtop24" onclick="onClickOp(2)">&minus;</text>
+    <text x="240" y="180" class="txtop24" onclick="onClickOp(3)">+</text>
+
+    <text id="nval0" x="350" y="220" class="txt24" onclick="onClickNum(0)">00</text>
+    <text id="nval1" x="200" y="370" class="txt24" onclick="onClickNum(1)">00</text>
+    <text id="nval2" x="55" y="220" class="txt24" onclick="onClickNum(2)">00</text>
+    <text id="nval3" x="200" y="80" class="txt24" onclick="onClickNum(3)">00</text>
+</svg>
 
 <script>
+    const defaultNumFill = "#012356";
+    const highlightNumFill = "#009bff";
+    const disabledNumFill = "grey";
+    const defaultOpFill = "#c48944";
+    const highlightOpFill = "#Dfc94b";
+
+    let numDisabled = [];
+    let opSelected = -1;
+    let numStack = [];
+
+    function onClickNum(i) {
+        if (numDisabled[i]) return;
+        let idx = numStack.indexOf(i);
+        if (idx >= 0) {
+            unhighlightNum(i);
+            if (idx == 0 && numStack.length == 2) {
+                numStack[0] = numStack[1];
+            }
+            numStack.pop();
+        } else {
+            if (numStack.length == 2) {
+                unhighlightNum(numStack[0]);
+                numStack[0] = numStack[1];
+                numStack[1] = i;
+            } else {
+                numStack.push(i);
+            }
+            highlightNum(i);
+        }
+        checkComplete(i);
+    }
+    function onClickOp(i) {
+        if (opSelected >= 0) {
+            unhighlightOp(opSelected);
+        }
+        if (opSelected == i) {
+            opSelected = -1;
+        } else {
+            opSelected = i;
+            highlightOp(i);
+            checkComplete(0);
+        }
+    }
+    function checkComplete() {
+        if (opSelected < 0) return;
+        if (numStack.length < 2) return;
+        // Get the operator and operands.
+        let n1 = parseInt(document.getElementById("nval" + numStack[0]).innerHTML);
+        let n2 = parseInt(document.getElementById("nval" + numStack[1]).innerHTML);
+        let n = 0;
+        if (opSelected == 0 && (n2 == 0 || n1 % n2 != 0)) {
+            // disallow div/0 and non-int div
+            unselectAll();
+            return;
+        }
+        // Calculate
+        switch (opSelected) {
+            case 3: n = n1 + n2; break;
+            case 2: n = n1 - n2; break;
+            case 1: n = n1 * n2; break;
+            case 0: n = n1 / n2; break;
+        }
+        // Display the calculation result.
+        document.getElementById("nval" + numStack[0]).innerHTML = "";
+        disableNum(numStack[0]);
+        numDisabled[numStack[0]] = true;
+        document.getElementById("nval" + numStack[1]).innerHTML = n;
+        unhighlightNum(numStack[1]);
+        numStack.pop(); numStack.pop();
+        unselectAll();
+        // Check if done.
+        let disabledCount = 0;
+        for (let i = 0; i < 4; i++) {
+            if (numDisabled[i]) {
+                disabledCount++;
+            }
+        }
+        console.log(disabledCount);
+        if (disabledCount != 3) return;
+        // We are done, check result.
+        if (n == 24) {
+            createGame();
+        } else {
+            resetGame();
+        }
+    }
+    function highlightNum(i) {
+        document.getElementById("num" + i).setAttribute("fill", highlightNumFill);
+    }
+    function unhighlightNum(i) {
+        document.getElementById("num" + i).setAttribute("fill", defaultNumFill);
+    }
+    function disableNum(i) {
+        document.getElementById("num" + i).setAttribute("fill", disabledNumFill);
+    }
+    function highlightOp(i) {
+        document.getElementById("op" + i).setAttribute("fill", highlightOpFill);
+    }
+    function unhighlightOp(i) {
+        document.getElementById("op" + i).setAttribute("fill", defaultOpFill);
+    }
+    function unselectAll() {
+        unhighlightOp(opSelected);
+        opSelected = -1;
+        while (numStack.length > 0) {
+            let i = numStack.pop();
+            unhighlightNum(i);
+        }
+    }
+
     class Digit {
         constructor(op, a, b, v) {
             this.operator = op;
@@ -94,8 +227,10 @@ permalink: /24
         }
         return null;
     }
+    let digits = [];
+
+    // Creates a new game, randomly select 4 numbers, make sure the game is solvable.
     function createGame() {
-        let digits = [];
         let solution = null;
         while (true) {
             for (let i = 0; i < 4; i++) {
@@ -106,6 +241,21 @@ permalink: /24
                 break;
             }
         }
+        resetGame();
+    }
+    // Resets the game to the initial state of the game previously created.
+    function resetGame() {
+        opSelected = -1;
+        for (let i = 0; i < 4; i++) {
+            unhighlightNum(i);
+            unhighlightOp(i);
+            if (numStack.length > 0) numStack.pop();
+            numDisabled[i] = false;
+            document.getElementById("nval" + i.toString()).innerHTML = digits[i];
+        }
+    }
+    // Show the solution
+    function showSolution() {
         let text = "";
         for (let i = 0; i < digits.length; i++) {
             text += digits[i].value + ", "
@@ -117,6 +267,7 @@ permalink: /24
         let content = document.getElementById("dbg");
         content.innerHTML = text;
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
+
     }
 
     createGame();
