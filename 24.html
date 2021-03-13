@@ -1,43 +1,63 @@
 ---
 title: The 24 Game
-description: Use arithmetics to make 24!
+description: Click on the numbers and operators to make 24!
 layout: default
 permalink: /24
 ---
-<button onclick="createGame()">Next Game</button>
-<div id="dbg" class="calchistory"></div>
+<div class="centerdiv">
+    <table>
+        <tr>
+            <td><button onclick="createGame()">Next Game</button></td>
+            <td><button onclick="restartGame()">Restart Game</button></td>
+            <td><button onclick="showSolution()">Show Solution</button></td>
+            <td bgcolor="#ddffdd">Successes: <span id="successCount"></span></td>
+            <td bgcolor="#ffdddd">Failures: <span id="failureCount"></span></td>
+        </tr>
+        <tr>
+            <td colspan="5">
+                <div id="dbg" class="calchistory"></div>
+            </td>
+        </tr>
+    </table>
 
-<svg width="500" height="500">
-    <!-- R1=100, R2=200, sector degrees: n1=-40 to 40, n2=50 to 130, n3=140 to 220, n4=230 to 310 -->
-    <path id="num0" d="M 353,71 A 200,200 0 0,1 353,328 L 277,264 A 100,100 0 0,0 277,136 Z" fill="#012356" onclick="onClickNum(0)" />
-    <path id="num1" d="M 328,353 A 200,200 0 0,1 71,353 L 136,277 A 100,100 0 0,0 264,277 Z" fill="#012356" onclick="onClickNum(1)" />
-    <path id="num2" d="M 47,328 A 200,200 0 0,1 47,71 L 123,136 A 100,100 0 0,0 123,264 Z" fill="#012356" onclick="onClickNum(2)" />
-    <path id="num3" d="M 71,47 A 200,200 0 0,1 328,47 L 264,123 A 100,100 0 0,0 136,123 Z" fill="#012356" onclick="onClickNum(3)" />
+    <svg width="720" height="720">
+        <!-- R1=170, R2=340, sector degrees: n1=-40 to 40, n2=50 to 130, n3=140 to 220, n4=230 to 310 -->
+        <path id="num0" d="M 620,141 A 360,360 0 0,1 620,579 L 490,469 A 170,170 0 0,0 490,251 Z" fill="#012356" onclick="onClickNum(0)" />
+        <path id="num1" d="M 579,620 A 360,360 0 0,1 141,620 L 251,490 A 170,170 0 0,0 469,490 Z" fill="#012356" onclick="onClickNum(1)" />
+        <path id="num2" d="M 100,579 A 360,360 0 0,1 100,141 L 230,251 A 170,170 0 0,0 230,469 Z" fill="#012356" onclick="onClickNum(2)" />
+        <path id="num3" d="M 141,100 A 360,360 0 0,1 579,100 L 469,230 A 170,170 0 0,0 251,230 Z" fill="#012356" onclick="onClickNum(3)" />
 
-    <!-- R=80, move=+5/-5, sector degrees: 0,90,180,270 -->
-    <path id="op0" d="M 285,205 A 80,80 0 0,1 205,285 L 205,205 Z" fill="#c48944" onclick="onClickOp(0)" />
-    <path id="op1" d="M 195,285 A 80,80 0 0,1 115,205 L 195,205 Z" fill="#c48944" onclick="onClickOp(1)" />
-    <path id="op2" d="M 115,195 A 80,80 0 0,1 195,115 L 195,195 Z" fill="#c48944" onclick="onClickOp(2)" />
-    <path id="op3" d="M 205,115 A 80,80 0 0,1 285,195 L 205,195 Z" fill="#c48944" onclick="onClickOp(3)" />
+        <!-- R=150, move=+5/-5, sector degrees: 0,90,180,270 -->
+        <path id="op0" d="M 515,365 A 150,150 0 0,1 365,515 L 365,365 Z" fill="#c48944" onclick="onClickOp(0)" />
+        <path id="op1" d="M 355,515 A 150,150 0 0,1 205,365 L 355,365 Z" fill="#c48944" onclick="onClickOp(1)" />
+        <path id="op2" d="M 205,355 A 150,150 0 0,1 355,205 L 355,355 Z" fill="#c48944" onclick="onClickOp(2)" />
+        <path id="op3" d="M 365,205 A 150,150 0 0,1 515,355 L 365,355 Z" fill="#c48944" onclick="onClickOp(3)" />
 
-    <text x="240" y="260" class="txtop24" onclick="onClickOp(0)">&divide;</text>
-    <text x="160" y="260" class="txtop24" onclick="onClickOp(1)">&times;</text>
-    <text x="160" y="180" class="txtop24" onclick="onClickOp(2)">&minus;</text>
-    <text x="240" y="180" class="txtop24" onclick="onClickOp(3)">+</text>
+        <text x="430" y="460" class="txtop24" onclick="onClickOp(0)">&divide;</text>
+        <text x="290" y="460" class="txtop24" onclick="onClickOp(1)">&times;</text>
+        <text x="290" y="330" class="txtop24" onclick="onClickOp(2)">&minus;</text>
+        <text x="430" y="330" class="txtop24" onclick="onClickOp(3)">+</text>
 
-    <text id="nval0" x="350" y="220" class="txt24" onclick="onClickNum(0)">00</text>
-    <text id="nval1" x="200" y="370" class="txt24" onclick="onClickNum(1)">00</text>
-    <text id="nval2" x="55" y="220" class="txt24" onclick="onClickNum(2)">00</text>
-    <text id="nval3" x="200" y="80" class="txt24" onclick="onClickNum(3)">00</text>
-</svg>
+        <text id="nval0" x="610" y="380" class="txt24" onclick="onClickNum(0)">00</text>
+        <text id="nval1" x="360" y="630" class="txt24" onclick="onClickNum(1)">00</text>
+        <text id="nval2" x="100" y="380" class="txt24" onclick="onClickNum(2)">00</text>
+        <text id="nval3" x="360" y="140" class="txt24" onclick="onClickNum(3)">00</text>
+    </svg>
+</div>
 
 <script>
+    // The colors of the buttons.
     const defaultNumFill = "#012356";
     const highlightNumFill = "#009bff";
     const disabledNumFill = "grey";
     const defaultOpFill = "#c48944";
     const highlightOpFill = "#Dfc94b";
 
+    // Game statistics
+    let successCount = 0;
+    let failureCount = 0;
+
+    // Game state: whether each number is disabled, the selected operator, the selected numbers.
     let numDisabled = [];
     let opSelected = -1;
     let numStack = [];
@@ -113,8 +133,10 @@ permalink: /24
         if (disabledCount != 3) return;
         // We are done, check result.
         if (n == 24) {
+            successCount++;
             createGame();
         } else {
+            failureCount++;
             resetGame();
         }
     }
@@ -228,10 +250,10 @@ permalink: /24
         return null;
     }
     let digits = [];
+    let solution = null;
 
     // Creates a new game, randomly select 4 numbers, make sure the game is solvable.
     function createGame() {
-        let solution = null;
         while (true) {
             for (let i = 0; i < 4; i++) {
                 digits[i] = new Digit(null, null, null, 1 + Math.floor(Math.random() * 9));
@@ -241,10 +263,13 @@ permalink: /24
                 break;
             }
         }
-        resetGame();
+        restartGame();
     }
     // Resets the game to the initial state of the game previously created.
-    function resetGame() {
+    function restartGame() {
+        document.getElementById("successCount").innerHTML = successCount;
+        document.getElementById("failureCount").innerHTML = failureCount;
+        document.getElementById("dbg").innerHTML = "";
         opSelected = -1;
         for (let i = 0; i < 4; i++) {
             unhighlightNum(i);
@@ -268,6 +293,8 @@ permalink: /24
         content.innerHTML = text;
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
 
+        failureCount++;
+        document.getElementById("failureCount").innerHTML = failureCount;
     }
 
     createGame();
