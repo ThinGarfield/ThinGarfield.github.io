@@ -42,6 +42,24 @@ permalink: /24
         <text id="nval1" x="360" y="630" class="txt24" onclick="onClickNum(1)">00</text>
         <text id="nval2" x="100" y="380" class="txt24" onclick="onClickNum(2)">00</text>
         <text id="nval3" x="360" y="140" class="txt24" onclick="onClickNum(3)">00</text>
+
+        <image display="none" opacity="0" x="210" y="210" width="300" height="300" href="/assets/thumbsup.png" id="imgThumbsup">
+            <animate xlink:href="#imgThumbsup" attributeName="opacity" begin="indefinite" from="0" to="0" dur="1.4s" values="0;1; 1; 0" keyTimes="0;0.2; 0.95; 1" fill="freeze" id="animateOpacityThumbsup" />
+            <animate xlink:href="#imgThumbsup" attributeName="display" begin="indefinite" from="none" to="none" dur="1.4s" values="none; block; block; none" keyTimes="0;0.01;0.99;1" fill="freeze" id="animateDisplayThumbsup" />
+            <animate xlink:href="#imgThumbsup" attributeName="width" begin="indefinite" from="0" to="50" dur="1.4s" values="0;400; 50" keyTimes="0;0.3;1" fill="freeze" id="animateWidthThumbsup" />
+            <animate xlink:href="#imgThumbsup" attributeName="height" begin="indefinite" from="00" to="50" dur="1.4s" values="0;400; 50" keyTimes="0;0.3;1" fill="freeze" id="animateHeightThumbsup" />
+            <animate xlink:href="#imgThumbsup" attributeName="x" begin="indefinite" from="360" to="500" dur="1.4s" values="360;160; 500" keyTimes="0;0.3;1" fill="freeze" id="animateXThumbsup" />
+            <animate xlink:href="#imgThumbsup" attributeName="y" begin="indefinite" from="360" to="0" dur="1.4s" values="360;160; 0" keyTimes="0;0.3;1" fill="freeze" id="animateYThumbsup" />
+        </image>
+
+        <image display="none" opacity="0" x="210" y="210" width="300" height="300" href="/assets/thumbsdown.png" id="imgThumbsdown">
+            <animate xlink:href="#imgThumbsdown" attributeName="opacity" begin="indefinite" from="0" to="0" dur="1.4s" values="0;1; 1; 0" keyTimes="0;0.2; 0.95; 1" fill="freeze" id="animateOpacityThumbsdown" />
+            <animate xlink:href="#imgThumbsdown" attributeName="display" begin="indefinite" from="none" to="none" dur="1.4s" values="none; block; block; none" keyTimes="0;0.01;0.99;1" fill="freeze" id="animateDisplayThumbsdown" />
+            <animate xlink:href="#imgThumbsdown" attributeName="width" begin="indefinite" from="0" to="50" dur="1.4s" values="0;400; 50" keyTimes="0;0.3;1" fill="freeze" id="animateWidthThumbsdown" />
+            <animate xlink:href="#imgThumbsdown" attributeName="height" begin="indefinite" from="00" to="50" dur="1.4s" values="0;400; 50" keyTimes="0;0.3;1" fill="freeze" id="animateHeightThumbsdown" />
+            <animate xlink:href="#imgThumbsdown" attributeName="x" begin="indefinite" from="360" to="650" dur="1.4s" values="360;160; 650" keyTimes="0;0.3;1" fill="freeze" id="animateXThumbsdown" />
+            <animate xlink:href="#imgThumbsdown" attributeName="y" begin="indefinite" from="360" to="0" dur="1.4s" values="360;160; 0" keyTimes="0;0.3;1" fill="freeze" id="animateYThumbsdown" />
+        </image>
     </svg>
 </div>
 
@@ -61,6 +79,7 @@ permalink: /24
     let numDisabled = [];
     let opSelected = -1;
     let numStack = [];
+    let solutionShown = false;
 
     function onClickNum(i) {
         if (numDisabled[i]) return;
@@ -92,7 +111,7 @@ permalink: /24
         } else {
             opSelected = i;
             highlightOp(i);
-            checkComplete(0);
+            checkComplete();
         }
     }
     function checkComplete() {
@@ -119,9 +138,10 @@ permalink: /24
         disableNum(numStack[0]);
         numDisabled[numStack[0]] = true;
         document.getElementById("nval" + numStack[1]).innerHTML = n;
-        unhighlightNum(numStack[1]);
-        numStack.pop(); numStack.pop();
-        unselectAll();
+        numStack[0] = numStack[1];
+        numStack.pop();
+        unhighlightOp(opSelected);
+        opSelected = -1;
         // Check if done.
         let disabledCount = 0;
         for (let i = 0; i < 4; i++) {
@@ -133,11 +153,17 @@ permalink: /24
         if (disabledCount != 3) return;
         // We are done, check result.
         if (n == 24) {
-            successCount++;
+            if (!solutionShown) {
+                successCount++;
+            }
+            animateThumbsup();
             createGame();
         } else {
-            failureCount++;
-            resetGame();
+            if (!solutionShown) {
+                failureCount++;
+            }
+            animateThumbsdown();
+            restartGame();
         }
     }
     function highlightNum(i) {
@@ -254,6 +280,7 @@ permalink: /24
 
     // Creates a new game, randomly select 4 numbers, make sure the game is solvable.
     function createGame() {
+        solutionShown = false;
         while (true) {
             for (let i = 0; i < 4; i++) {
                 digits[i] = new Digit(null, null, null, 1 + Math.floor(Math.random() * 9));
@@ -281,6 +308,10 @@ permalink: /24
     }
     // Show the solution
     function showSolution() {
+        if (!solutionShown) {
+            failureCount++;
+        }
+        solutionShown = true;
         let text = "";
         for (let i = 0; i < digits.length; i++) {
             text += digits[i].value + ", "
@@ -293,8 +324,25 @@ permalink: /24
         content.innerHTML = text;
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, content]);
 
-        failureCount++;
         document.getElementById("failureCount").innerHTML = failureCount;
+    }
+    // Uses when a game is successfully completed.
+    function animateThumbsup() {
+        document.getElementById("animateOpacityThumbsup").beginElement();
+        document.getElementById("animateDisplayThumbsup").beginElement();
+        document.getElementById("animateWidthThumbsup").beginElement();
+        document.getElementById("animateHeightThumbsup").beginElement();
+        document.getElementById("animateXThumbsup").beginElement();
+        document.getElementById("animateYThumbsup").beginElement();
+    }
+    // Uses when a game failed.
+    function animateThumbsdown() {
+        document.getElementById("animateOpacityThumbsdown").beginElement();
+        document.getElementById("animateDisplayThumbsdown").beginElement();
+        document.getElementById("animateWidthThumbsdown").beginElement();
+        document.getElementById("animateHeightThumbsdown").beginElement();
+        document.getElementById("animateXThumbsdown").beginElement();
+        document.getElementById("animateYThumbsdown").beginElement();
     }
 
     createGame();
