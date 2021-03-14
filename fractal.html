@@ -27,37 +27,50 @@ permalink: /fractal
     </p>
     <p>
         Below you can switch between Mandelbrot and Julia sets. You can adjust the size, the maximum number of iterations,
-        the threshold $M$, and the color palette, by using the sliders. In case of Julia set, you can also click on the gray square
+        the threshold $M$, the coloring scheme, and the color palette. In case of Julia set, you can also click on the gray square
         to change the value of $w$. The computation runs in
         your browser, be patient, it may take a few sections after you release the slider for the image
         to update. (Tip: smaller image size runs faster.)
     </p>
     <p>Double click on the image to zoom in. Double click while holding "Shift" key to zoom out. Drag the image to move.</p>
 </div>
-<div>
+<div class="centerfractaldiv">
     <table>
         <tr>
-            <td rowspan="2">
+            <td>
                 <input type="radio" name="sets" value="mandelbrot" onchange="onSetChange()" checked />
                 <lable><b>Mandelbrot</b></lable><br />
                 <input type="radio" name="sets" value="julia" onchange="onSetChange()" />
                 <lable><b>Julia</b></lable>
             </td>
-            <th>Image Size :<br> <span id="imgSizeVal">900*600</span></th>
-            <th>Max Iterations: <br> <span id="maxIterVal">500</span></th>
-            <th>Threshold $M$ :<br> <span id="thresholdVal">4.0</span></th>
-            <th>Color Palette :<br> <span id="colorVal">0</span></th>
-            <th id="juliaValZCell">$w=$ <br><span id="juliaValZ"></span></th>
+            <td>
+                <input type="radio" name="colorscheme" value="hue" onchange="onColorSchemeChange()" checked />
+                <lable><b>Color: Hue</b></lable><br>
+                <input type="radio" name="colorscheme" value="rgb" onchange="onColorSchemeChange()" />
+                <lable><b>Color: RGB</b></lable>
+            </td>
+            <th>Color Palette :<br>
+                <span id="colorVal">0</span><br>
+                <input type="range" min="0" max="100" value="0" class="slider" oninput="onColorInput(this.value)" onchange=" onColorChange(this.value)">
+            </th>
         </tr>
         <tr>
-            <td><input type="range" min="400" max="1600" value="600" class="slider" oninput="onSizeInput(this.value)" onchange=" onSizeChange(this.value)"></td>
-            <td><input type="range" min="500" max="5000" value="500" class="slider" oninput="onMaxIterationInput(this.value)" onchange="onMaxIterationChange(this.value)"></td>
-            <td><input type="range" min="200" max="600" value="400" class="slider" oninput="onThresholdInput(this.value)" onchange=" onThresholdChange(this.value)"></td>
-            <td><input type="range" min="0" max="100" value="0" class="slider" oninput="onColorInput(this.value)" onchange=" onColorChange(this.value)"></td>
-            <td id="juliaZCell">
+            <th>Image Size :<br>
+                <span id="imgSizeVal">900*600</span><br>
+                <input type="range" min="400" max="1600" value="600" class="slider" oninput="onSizeInput(this.value)" onchange=" onSizeChange(this.value)">
+            </th>
+            <th>Max Iterations: <br>
+                <span id="maxIterVal">500</span><br>
+                <input type="range" min="500" max="5000" value="500" class="slider" oninput="onMaxIterationInput(this.value)" onchange="onMaxIterationChange(this.value)">
+            </th>
+            <th>Threshold $M$ :<br>
+                <span id="thresholdVal">4.0</span><br>
+                <input type="range" min="200" max="600" value="400" class="slider" oninput="onThresholdInput(this.value)" onchange=" onThresholdChange(this.value)">
+            </th>
+            <th id="juliaValZCell">$w=$ <span id="juliaValZ"></span><br>
                 <canvas id="juliaZ" width="100" height="100" onmousedown="onJuliaZStart(event)" onmouseup="onJuliaZEnd(event)" onmousemove="onJuliaZMove(event)">
                 </canvas>
-            </td>
+            </th>
         </tr>
     </table>
 </div>
@@ -78,6 +91,7 @@ permalink: /fractal
     const zoomRatio = 4; // ratio in each step of zoom in/out.
     let threshold = 4.0; // The threshold M.
     let colorOffset = 0.0; // The color palette seed.
+    let colorSchemeHue = true;
     let maxIterations = 500;
     let isJulia = false; // true:Julia, false:Mandelbrot.
     let aspectRatio = 0; // width:height ratio
@@ -102,14 +116,12 @@ permalink: /fractal
             wy = 0.1889;
             document.getElementById("desc_mandelbrot").style.display = "none";
             document.getElementById("desc_julia").style.display = "block";
-            document.getElementById("juliaZCell").style.display = "block";
             document.getElementById("juliaValZCell").style.display = "block";
             updateJuliaZ();
         } else {
             aspectRatio = 1.5;
             document.getElementById("desc_julia").style.display = "none";
             document.getElementById("desc_mandelbrot").style.display = "block";
-            document.getElementById("juliaZCell").style.display = "none";
             document.getElementById("juliaValZCell").style.display = "none";
         }
         ymin = -1;
@@ -179,6 +191,20 @@ permalink: /fractal
         }
         if (isJulia !== isJuliaChecked) {
             isJulia = isJuliaChecked;
+            resetAll();
+            showFractal();
+        }
+    }
+    function onColorSchemeChange() {
+        let radios = document.getElementsByName("colorscheme");
+        let isHueChecked = false;
+        for (let i = 0; i < radios.length; i++) {
+            if (radios[i].checked) {
+                isHueChecked = radios[i].value === "hue";
+            }
+        }
+        if (colorSchemeHue !== isHueChecked) {
+            colorSchemeHue = isHueChecked;
             resetAll();
             showFractal();
         }
@@ -305,12 +331,34 @@ permalink: /fractal
                 x = x1;
             }
         }
-        i = (maxIterations - i) * byteCubed / maxIterations;
-        i = (i + colorOffset * byteCubed) % (byteCubed + 1);
-
-        var r = Math.floor(i / byteSquared);
-        var g = Math.floor((i / 256) % 256);
-        var b = Math.floor(i % 256);
+        let r, g, b;
+        if (colorSchemeHue) {
+            if (i * 2 >= maxIterations) {
+                r = 0; g = 0; b = 0;
+            } else {
+                let scaled = i * 2 / maxIterations + colorOffset + 0.5;
+                scaled = scaled - Math.floor(scaled);
+                if (scaled < 1.0 / 6) {
+                    r = 255; g = Math.floor(scaled * 6 * 256); b = 0;
+                } else if (scaled < 2.0 / 6) {
+                    r = Math.floor((2.0 / 6 - scaled) * 6 * 256); g = 255, b = 0;
+                } else if (scaled < 3.0 / 6) {
+                    r = 0; g = 255; b = Math.floor((scaled - 2.0 / 6) * 6 * 256);
+                } else if (scaled < 4.0 / 6) {
+                    r = 0; g = Math.floor((4.0 / 6 - scaled) * 6 * 256); b = 255;
+                } else if (scaled < 5.0 / 6) {
+                    r = Math.floor((scaled - 4.0 / 6) * 6 * 256); g = 0; b = 255;
+                } else {
+                    r = 255; g = 0; b = Math.floor((1.0 - scaled) * 6 * 256);
+                }
+            }
+        } else {
+            i = (maxIterations - i) * byteCubed / maxIterations;
+            i = (i + colorOffset * byteCubed) % (byteCubed + 1);
+            r = Math.floor(i / byteSquared);
+            g = Math.floor((i / 256) % 256);
+            b = Math.floor(i % 256);
+        }
         pixels[idx] = r;
         pixels[idx + 1] = g;
         pixels[idx + 2] = b;
