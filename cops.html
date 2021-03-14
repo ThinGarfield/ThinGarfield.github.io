@@ -37,7 +37,7 @@ permalink: /cops
 </center>
 <svg id="svgroot" width="1280" height="700" onload="makeDraggable(evt)">
     <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="13" refY="3.5" orient="auto-start-reverse" fill="green">1
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="13" refY="3.5" orient="auto-start-reverse" fill="#c48944">
             <polygon points="0 0, 8 3.5, 0 7" />
         </marker>
     </defs>
@@ -51,6 +51,8 @@ permalink: /cops
     const svgns = "http://www.w3.org/2000/svg";
     const kRobberImgPath = "assets/robber.png";
     const kCopImgPath = "assets/cop.png";
+    const kDefaultLineColor = "#012356";
+    const kHighlightColor = "#c48944";
 
     const kCanvasWidth = 1230;
     const kAspectRatio = 1.4;
@@ -237,7 +239,7 @@ permalink: /cops
             c.setAttribute("cx", pv.x);
             c.setAttribute("cy", pv.y);
             c.setAttribute("r", kRadiusRegular);
-            c.setAttribute("stroke", "blue");
+            c.setAttribute("stroke", kDefaultLineColor);
             c.setAttribute("fill", "white");
             document.getElementById("svgroot").appendChild(c);
         }
@@ -295,7 +297,7 @@ permalink: /cops
                     + " " + pv1.x + "," + pv1.y + " " + pv.x + "," + pv.y);
             }
             line.setAttribute("id", this.getEdgeDocId(u, v));
-            line.setAttribute("stroke", "blue");
+            line.setAttribute("stroke", kDefaultLineColor);
             line.setAttribute("stroke-width", 2);
             document.getElementById("svgroot").appendChild(line);
         }
@@ -349,12 +351,12 @@ permalink: /cops
                 let v1 = vertexId;
                 let v2 = this.adj[vertexId][i];
                 let u = document.getElementById("v_" + v2);
-                u.setAttribute("stroke", "green");
+                u.setAttribute("stroke", kHighlightColor);
                 u.setAttribute("r", kRadiusRegular * 2);
                 this.highlightedVertices.push(u);
 
                 let e = document.getElementById(this.getEdgeDocId(v1, v2));
-                e.setAttribute("stroke", "green");
+                e.setAttribute("stroke", kHighlightColor);
                 if (v1 < v2) {
                     e.setAttribute("marker-end", "url(#arrowhead)");
                 } else {
@@ -366,12 +368,12 @@ permalink: /cops
         stopHighlighting() {
             while (this.highlightedVertices.length > 0) {
                 let u = this.highlightedVertices.pop();
-                u.setAttribute("stroke", "blue");
+                u.setAttribute("stroke", kDefaultLineColor);
                 u.setAttribute("r", kRadiusRegular);
             }
             while (this.highlightedEdges.length > 0) {
                 let e = this.highlightedEdges.pop();
-                e.setAttribute("stroke", "blue");
+                e.setAttribute("stroke", kDefaultLineColor);
                 e.setAttribute("marker-end", "");
                 e.setAttribute("marker-start", "");
             }
