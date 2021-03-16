@@ -44,13 +44,18 @@ permalink: /fractal
                 <lable><b>Julia</b></lable>
             </td>
             <td>
+                <input type="radio" name="compute" value="CPU" onchange="onComputeChange()" checked />
+                <lable><b>CPU</b></lable><br />
+                <input type="radio" name="compute" value="WebGL" onchange="onComputeChange()" />
+                <lable><b>WebGL</b></lable>
+            </td>
+            <td>
                 <input type="radio" name="colorscheme" value="hue" onchange="onColorSchemeChange()" checked />
                 <lable><b>Color: Hue</b></lable><br>
                 <input type="radio" name="colorscheme" value="rgb" onchange="onColorSchemeChange()" />
                 <lable><b>Color: RGB</b></lable>
             </td>
-            <th>Color Palette :<br>
-                <span id="colorVal">0</span><br>
+            <th>Color Palette : <span id="colorVal">0</span><br>
                 <input type="range" min="0" max="100" value="0" class="slider" oninput="onColorInput(this.value)" onchange=" onColorChange(this.value)">
             </th>
         </tr>
@@ -76,7 +81,9 @@ permalink: /fractal
 </div>
 
 <div>
-    <canvas id="mandelbrot" class="fractal" width="960" height="600" ondblclick="onZoomIn(event)" onmousedown="onStartDrag(event)" onmouseup="onEndDrag(event)">
+    <canvas id="canvasCPU" class="fractal" width="960" height="600" ondblclick="onZoomIn(event)" onmousedown="onStartDrag(event)" onmouseup="onEndDrag(event)">
+    </canvas>
+    <canvas id="canvasWebGL" class="fractal" width="960" height="600" ondblclick="onZoomIn(event)" onmousedown="onStartDrag(event)" onmouseup="onEndDrag(event)">
     </canvas>
 </div>
 
@@ -95,6 +102,7 @@ permalink: /fractal
     let maxIterations = 500;
     let isJulia = false; // true:Julia, false:Mandelbrot.
     let aspectRatio = 0; // width:height ratio
+    let useWebGL = false; // true: use WebGL to render, false: use CPU to render.
 
     // For Julia set only: w = (wx) + i(wy)
     let wx = 0;
@@ -128,7 +136,7 @@ permalink: /fractal
         ymax = 1;
         xmax = 1;
         xmin = 1 - 2 * aspectRatio;
-        let canvas = document.getElementById('mandelbrot');
+        let canvas = document.getElementById('canvasCPU');
         canvas.width = Math.floor(canvas.height * aspectRatio);
         document.getElementById("imgSizeVal").innerHTML = canvas.width.toString() + "*" + canvas.height.toString();
     }
@@ -155,7 +163,7 @@ permalink: /fractal
         document.getElementById("imgSizeVal").innerHTML = Math.floor(v * aspectRatio).toString() + "*" + v.toString();
     }
     function onSizeChange(v) {
-        let canvas = document.getElementById('mandelbrot');
+        let canvas = document.getElementById('canvasCPU');
         canvas.height = v;
         canvas.width = Math.floor(v * aspectRatio);
         showFractal();
@@ -182,13 +190,7 @@ permalink: /fractal
         showFractal();
     }
     function onSetChange() {
-        let radios = document.getElementsByName("sets");
-        let isJuliaChecked = false;
-        for (let i = 0; i < radios.length; i++) {
-            if (radios[i].checked) {
-                isJuliaChecked = radios[i].value === "julia";
-            }
-        }
+        let isJuliaChecked = checkRadioButton("sets", "julia");
         if (isJulia !== isJuliaChecked) {
             isJulia = isJuliaChecked;
             resetAll();
@@ -196,18 +198,30 @@ permalink: /fractal
         }
     }
     function onColorSchemeChange() {
-        let radios = document.getElementsByName("colorscheme");
-        let isHueChecked = false;
-        for (let i = 0; i < radios.length; i++) {
-            if (radios[i].checked) {
-                isHueChecked = radios[i].value === "hue";
-            }
-        }
+        let isHueChecked = checkRadioButton("colorscheme", "hue");
         if (colorSchemeHue !== isHueChecked) {
             colorSchemeHue = isHueChecked;
             resetAll();
             showFractal();
         }
+    }
+    function onComputeChange() {
+        let isWebGLChecked = checkRadioButton("compute", "WebGL");
+        if (useWebGL !== isWebGLChecked) {
+            useWebGL = isWebGLChecked;
+            resetAll();
+            showFractal();
+        }
+    }
+    // Checks the radio buttons of the given name, returns true if the given value is checked.
+    function checkRadioButton(name, value) {
+        let radios = document.getElementsByName(name);
+        for (let i = 0; i < radios.length; i++) {
+            if (radios[i].checked) {
+                return radios[i].value === value;
+            }
+        }
+        return false;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -251,7 +265,7 @@ permalink: /fractal
     function onZoomIn(event) {
         isInDrag = false;
         let zoomOut = event.getModifierState("Shift"); // Check whether shift-key is down.
-        let canvas = document.getElementById('mandelbrot');
+        let canvas = document.getElementById('canvasCPU');
         let x = event.offsetX / canvas.width * (xmax - xmin) + xmin;
         let y = event.offsetY / canvas.height * (ymax - ymin) + ymin;
         let w = zoomOut ? (xmax - xmin) * zoomRatio : (xmax - xmin) / zoomRatio;
@@ -268,7 +282,7 @@ permalink: /fractal
     function onEndDrag(event) {
         if (isInDrag) {
             isInDrag = false;
-            let canvas = document.getElementById('mandelbrot');
+            let canvas = document.getElementById('canvasCPU');
             let xDiff = (event.offsetX - startDragX) / canvas.width * (xmax - xmin);
             let yDiff = (event.offsetY - startDragY) / canvas.height * (ymax - ymin);
             xmax -= xDiff; xmin -= xDiff;
@@ -278,17 +292,26 @@ permalink: /fractal
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    // This section performs the actual computation and drawing.
+    // This section performs the actual computation and drawing, using CPU rendering.
     ////////////////////////////////////////////////////////////////////////////////
 
     function showFractal() {
+        if (useWebGL && window.WebGLRenderingContext) {
+            if (showFractalWebGL()) {
+                return;
+            }
+        }
+        // If the selection is to use CPU rendering, or WebGL failed, then render using CPU.
         document.body.style.cursor = 'wait';
-        document.getElementById('mandelbrot').style.opacity = "0.3";
-        setTimeout(showFractalInternal, 50);
+        document.getElementById('canvasCPU').style.opacity = "0.3";
+        setTimeout(showFractalCPU, 50);
     }
 
-    function showFractalInternal() {
-        let canvas = document.getElementById('mandelbrot');
+    function showFractalCPU() {
+        let otherCanvas = document.getElementById('canvasWebGL');
+        let canvas = document.getElementById('canvasCPU');
+        otherCanvas.style.display = "none";
+        canvas.style.display = "block";
 
         // Get the image data and pixels array from the canvas, in order to draw on it.
         let ctx = canvas.getContext('2d');
@@ -310,7 +333,7 @@ permalink: /fractal
         // Everything above just updates the image data, this performs the actual drawing.
         ctx.putImageData(imgdata, 0, 0);
         document.body.style.cursor = 'default';
-        document.getElementById('mandelbrot').style.opacity = "1.0";
+        document.getElementById('canvasCPU').style.opacity = "1.0";
     }
     // Computes the Mandelbrot value at (x, y),
     // and sets the color in the pixels array at idx.
@@ -364,4 +387,107 @@ permalink: /fractal
         pixels[idx + 2] = b;
         pixels[idx + 3] = 255;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // This section performs the actual computation and drawing, using WebGL.
+    ////////////////////////////////////////////////////////////////////////////////
+    let gl = false;
+    function showFractalWebGL() {
+        console.log("WG1");
+        let otherCanvas = document.getElementById("canvasCPU");
+        let canvas = document.getElementById("canvasWebGL");
+        try {
+            gl = canvas.getContext("experimental-webgl");
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            console.log("WG2");
+
+            let prog = gl.createProgram();
+            gl.attachShader(prog, getShader(gl, "vertexShader"));
+            gl.attachShader(prog, getShader(gl, "fragmentShader"));
+            gl.linkProgram(prog);
+            gl.useProgram(prog);
+            console.log("WG3");
+
+            let posAtrLoc = gl.getAttribLocation(prog, "vPos");
+            gl.enableVertexAttribArray(posAtrLoc);
+            let posBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+                [-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0]), gl.STATIC_DRAW);
+            gl.vertexAttribPointer(posAtrLoc, 3, gl.FLOAT, false, 0, 0);
+            gl.uniform2f(gl.getUniformLocation(prog, "c"), 0.42, 0.22);
+            gl.uniform2f(gl.getUniformLocation(prog, "scale"), canvas.width / 2, canvas.width / .35);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            gl.flush();
+        } catch (e) {
+            return false;
+        }
+        console.log("YAY");
+        otherCanvas.style.display = "none";
+        canvas.style.display = "block";
+        return true;
+    }
+    function getShader(gl, id) {
+        var shaderScript = document.getElementById(id);
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3) str += k.textContent;
+            k = k.nextSibling;
+        }
+        var shader;
+        if (shaderScript.type == "x-shader/x-fragment") {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        }
+        else if (shaderScript.type == "x-shader/x-vertex") {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        }
+        else {
+            throw "Unexpected script type";
+        }
+        gl.shaderSource(shader, str);
+        gl.compileShader(shader);
+        if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) == 0) {
+            throw "Shader compile failed";
+        }
+        return shader;
+    }
+</script>
+
+<!-- The vertex shader -->
+<script id="vertexShader" type="x-shader/x-vertex">
+attribute vec3 vPos;
+
+void main(void) {
+    gl_Position = vec4(vPos, 1.);
+}
+</script>
+
+<!-- The fragment shader -->
+<script id="fragmentShader" type="x-shader/x-fragment">
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 c;
+uniform vec2 scale;
+void main(void) {
+    float R = (gl_FragCoord.x - scale.x) / scale.y;
+    float I = (gl_FragCoord.y - scale.x) / scale.y;
+    float R2 = R*R, I2 = I*I, Dr=.7, Di=.7, D;
+    int mm;
+    for(int m = 0; m < 255; m++){
+        D = (R*Dr - I*Di);  Di = (R*Di + I*Dr);  Dr = D;   mm = m;
+        I=(R+R)*I + c.y;  R=R2-I2 + c.x;  R2=R*R;  I2=I*I;
+        if( R2 + I2 > 100. ) break;
+    }
+    if (mm == 254) gl_FragColor = vec4(0., 0., 0., 1.);
+    else{
+    D = -30.*(log(log(R2+I2)*sqrt((R2+I2)/(Dr*Dr+Di*Di)))-float(mm)*.693);
+    D = mod( max(0., D), 90.)/30. ;
+    gl_FragColor = vec4( max(0., abs(D - 1.5) - .5),
+        max(0., 1. - abs(D - 1.)), max(0., 1. - abs(D - 2.)), 1.);
+    }
+}
 </script>
