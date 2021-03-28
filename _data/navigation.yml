@@ -1,23 +1,32 @@
 - title: Home
   url: /
+  row: 0
 
 - title: Fractal
   url: /fractal
-  
-- title: Calc
-  url: /calc
-
-- title: $\LaTeX$
-  url: /latex
-
-- title: Ascii Art
-  url: /ascii
+  row: 1
 
 - title: 24 Game
   url: /24
-
-- title: Cops & Robbers
-  url: /cops
+  row: 1
 
 - title: Inversion
   url: /inversion
+  row: 1
+
+- title: Ascii Art
+  url: /ascii
+  row: 1
+
+- title: Calc
+  url: /calc
+  row: 2
+
+- title: $\LaTeX$
+  url: /latex
+  row: 2
+
+- title: Cops & Robbers
+  url: /cops
+  row: 2
+

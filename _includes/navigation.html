@@ -21,7 +21,19 @@
                 {% else %}
                 {% assign current = ' style="background-color: #cccccc; border: 1px solid blue;"' %}
                 {% endif %}
-                {% if entry.title != 'Home' %}
+                {% if entry.row == 1 %}
+                <td{{ current }} width="150" align="center"><a href="{{ site.baseurl }}{{ entry.url }}" style="display: block;width: 150px">{{ entry.title}}</a></td>
+                    {% endif %}
+                    {% endfor %}
+            </tr>
+            <tr>
+                {% for entry in site.data.navigation %}
+                {% if entry.url == current_page %}
+                {% assign current = ' style="background-color: #FFFFFF; font-weight: bold; border: 3px solid blue;"' %}
+                {% else %}
+                {% assign current = ' style="background-color: #cccccc; border: 1px solid blue;"' %}
+                {% endif %}
+                {% if entry.row == 2 %}
                 <td{{ current }} width="150" align="center"><a href="{{ site.baseurl }}{{ entry.url }}" style="display: block;width: 150px">{{ entry.title}}</a></td>
                     {% endif %}
                     {% endfor %}
