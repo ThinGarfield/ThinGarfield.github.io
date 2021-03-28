@@ -1,0 +1,173 @@
+---
+title: Invert Image about a Circle
+description: Select an image, and invert it about a circle. See the cool effects!
+layout: default
+permalink: /inversion
+---
+
+<div>
+    Given a circle in the complex plane with center $w \in \mathbb C$ and radius $r > 0$,
+    <b>inversion about the circle</b> is a function $f : \mathbb C \setminus \{w\} \rightarrow \mathbb C\setminus \{w\}$,
+    defined by $f(z) - w = r^2 / \left(\overline{z-w}\right)$. This page illustrates inversion using
+    any image you choose. After selecting the image, press down the mouse button at the inversion center and
+    then drag the mouse (without releasing the button) to determine the inversion radius.
+    <p></p>
+</div>
+
+<table>
+    <tr>
+        <td> <b>Select an image file:</b><br />
+            <input type="file" accept="image/*" onchange="loadFile(event)" />
+        </td>
+        <td id="imgSizeSelector" style="display:none;">Image Size :
+            <span id="imgSizeVal">900*600</span><br>
+            <input id="imgSizeInput" type="range" min="400" max="3200" value="600" class="slider" onchange="onSizeChange(this.value)">
+        </td>
+    </tr>
+    <tr>
+        <td>&nbsp</td>
+    </tr>
+</table>
+
+<div>
+    <b>Source image: </b></br>
+    <canvas id="sourceImg" width="960" height="100" onmousedown="onStartInvert(event)" onmouseup="onEndInvert(event)" onmousemove="onInvert(event)">
+    </canvas></br>
+    <b>Inverted image: </b></br>
+    <canvas id="resultImg" width="960" height="100">
+    </canvas>
+</div>
+
+<script>
+    const defaultWidth = 960;
+    let img = null;
+    let width = 0;
+    let height = 0;
+    let srcCtx = null;
+    let imgDataCopy = null;
+
+    // Used in start/end invert event handlers.
+    let isInOp = false;
+    let centerX = 0;
+    let centerY = 0;
+    let r = 0;
+
+    function loadFile(event) {
+        img = new Image();
+        img.onload = afterImageLoad;
+        img.src = URL.createObjectURL(event.target.files[0]);
+    }
+    function afterImageLoad() {
+        let src = document.getElementById("sourceImg");
+        width = Math.min(defaultWidth, img.width);
+        initializeImage(src);
+    }
+    function onSizeChange(v) {
+        let src = document.getElementById("sourceImg");
+        width = v;
+        initializeImage(src);
+    }
+
+    function initializeImage(src) {
+        height = Math.round(img.height * width / img.width);
+        src.setAttribute("width", width);
+        src.setAttribute("height", height);
+
+        srcCtx = document.getElementById("sourceImg").getContext("2d");
+        srcCtx.drawImage(img, 0, 0, width, height);
+        imgDataCopy = srcCtx.createImageData(width, height);
+        let data = srcCtx.getImageData(0, 0, width, height);
+        for (let i = 0; i < data.data.length; i++) {
+            imgDataCopy.data[i] = data.data[i];
+        }
+
+        centerX = Math.round(width / 2);
+        centerY = Math.round(height / 2);
+        r = Math.round(width / 10);
+        drawCenter();
+        drawCircle();
+        drawInversion();
+
+        let input = document.getElementById("imgSizeInput");
+        input.setAttribute("min", Math.min(100, img.width));
+        input.setAttribute("max", img.width);
+        input.setAttribute("value", Math.min(defaultWidth, img.width));
+        document.getElementById("imgSizeVal").innerHTML = width.toString() + "*" + height;
+        document.getElementById("imgSizeSelector").style.display = "block";
+        // console.log("Image size selector: min=" + Math.min(100, img.width) + ", max=" + img.width + ", value=" + Math.min(defaultWidth, img.width));
+    }
+
+    function onStartInvert(event) {
+        if (srcCtx === null || imgDataCopy == null) return;
+        isInOp = true;
+        centerX = event.offsetX;
+        centerY = event.offsetY;
+        // console.log("center = (" + centerX + "," + centerY + "), w/h = (" + width + "," + height + ")");
+        drawCenter();
+    }
+    function onEndInvert(event) {
+        isInOp = false;
+    }
+    function onInvert(event) {
+        if (!isInOp || srcCtx === null || imgDataCopy == null) return;
+        r = Math.sqrt((event.offsetX - centerX) * (event.offsetX - centerX) + (event.offsetY - centerY) * (event.offsetY - centerY));
+        refreshSourceImg();
+        drawCenter();
+        drawCircle();
+        if (r > width / 30) {
+            drawInversion();
+        }
+    }
+
+    function refreshSourceImg() {
+        let data = srcCtx.getImageData(0, 0, width, height);
+        for (let i = 0; i < data.data.length; i++) {
+            data.data[i] = imgDataCopy.data[i];
+        }
+        srcCtx.putImageData(data, 0, 0);
+    }
+    function drawCenter() {
+        srcCtx.beginPath();
+        srcCtx.arc(centerX, centerY, 5, 0, 2 * Math.PI, false);
+        srcCtx.fillStyle = "#012356";
+        srcCtx.fill();
+        srcCtx.lineWidth = 2;
+        srcCtx.strokeStyle = "#c48944";
+        srcCtx.stroke();
+    }
+    function drawCircle() {
+        srcCtx.beginPath();
+        srcCtx.arc(centerX, centerY, r, 0, 2 * Math.PI, false);
+        srcCtx.lineWidth = 3;
+        srcCtx.strokeStyle = "#c48944";
+        srcCtx.stroke();
+    }
+
+    function drawInversion() {
+        let result = document.getElementById("resultImg");
+        result.setAttribute("width", width);
+        result.setAttribute("height", height);
+        let resultCtx = result.getContext("2d");
+        let data = resultCtx.getImageData(0, 0, width, height);
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let d2 = (x - centerX) * (x - centerX) + (y - centerY) * (y - centerY);
+                if (d2 != 0) {
+                    let ix = Math.round(r * r * (x - centerX) / d2) + centerX;
+                    let iy = Math.round(r * r * (y - centerY) / d2) + centerY;
+
+                    if (0 <= ix && ix < width && 0 <= iy && iy < height) {
+                        let dstIdx = (y * width + x) * 4;
+                        let srcIdx = (iy * width + ix) * 4;
+                        for (let k = 0; k < 4; k++) {
+                            data.data[dstIdx + k] = imgDataCopy.data[srcIdx + k];
+                            //console.log("(" + x + "," + y + ") <= (" + ix + "," + iy + ")");
+                        }
+                    }
+                }
+            }
+        }
+        resultCtx.putImageData(data, 0, 0);
+    }
+</script>
