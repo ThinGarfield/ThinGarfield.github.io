@@ -104,6 +104,7 @@ permalink: /inversion
         centerY = event.offsetY;
         // console.log("center = (" + centerX + "," + centerY + "), w/h = (" + width + "," + height + ")");
         drawCenter();
+        onInvert(event);
     }
     function onEndInvert(event) {
         isInOp = false;
@@ -114,9 +115,8 @@ permalink: /inversion
         refreshSourceImg();
         drawCenter();
         drawCircle();
-        if (r > width / 30) {
-            drawInversion();
-        }
+        r = Math.max(r, width / 30);
+        drawInversion();
     }
 
     function refreshSourceImg() {
