@@ -30,3 +30,6 @@
   url: /cops
   row: 2
 
+- title: Clock
+  url: /clock
+  row: 2

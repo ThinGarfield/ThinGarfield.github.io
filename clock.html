@@ -1,0 +1,56 @@
+---
+title: Continued Fraction Clock
+description: Date and time represented as a continued fraction.
+layout: default
+permalink: /clock
+---
+
+<div>
+    <div>Date Time: &nbsp; <span id='calender'></span></div>
+    <div>Decimal Representation: &nbsp; <span id='decimal'></span></div>
+    <div>Continued Fraction Representation: <br /><span id='contfrac'></span></div>
+</div>
+
+<script>
+    function pad(v) {
+        return ("00" + v).slice(-2);
+    }
+    // Assumes p <= q.
+    function gcd(a, b) {
+        if (a == 0) return b;
+        return gcd(b % a, a);
+    }
+    // Returns continued fraction representing p/q.
+    function formatContFrac(p, q, level) {
+        if (p < q) {
+            return "\\cfrac{1}{" + formatContFrac(q, p, level + 1) + "}";
+        } else if (p % q == 0 || level >= 50) {
+            return Math.floor(p / q);
+        }
+        else {
+            return Math.floor(p / q) + " + " + formatContFrac(p % q, q, level + 1);
+        }
+    }
+    function formatYearContFrac(year, p, q) {
+        let g = gcd(p, q);
+        return "\\[" + year + "+" + formatContFrac(p / g, q / g, 0) + "\\]"
+    }
+    function update() {
+        let t = new Date();
+        let year = t.getFullYear();
+        document.getElementById('calender').innerHTML =
+            year + "-" + pad(t.getMonth() + 1) + "-" + pad(t.getDate()) + "  " +
+            pad(t.getHours()) + ":" + pad(t.getMinutes()) + ":" + pad(t.getSeconds());
+
+        let start = new Date(year, 0, 1, 0, 0, 0).valueOf();
+        let end = new Date(year + 1, 0, 1, 0, 0, 0).valueOf();
+        let current = new Date(year, t.getMonth(), t.getDate(), t.getHours(), t.getMinutes(), t.getSeconds()).valueOf();
+        document.getElementById('decimal').innerHTML = year + (current - start) / (end - start);
+
+        let fracElem = document.getElementById('contfrac');
+        fracElem.innerHTML = formatYearContFrac(year, current - start, end - start);
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, fracElem]);
+    }
+
+    let timer = setInterval(update, 1000);
+</script>
