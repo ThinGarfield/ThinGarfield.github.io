@@ -5,10 +5,21 @@ layout: default
 permalink: /clock
 ---
 
+<table>
+    <tr>
+        <td>Date Time:</td>
+        <td><span id='calender' /></td>
+    </tr>
+    <tr>
+        <td>Decimal Representation:</td>
+        <td><span id='decimal' /></td>
+    </tr>
+    <tr>
+        <td colspan='2'>Continued Fraction Representation: </td>
+    </tr>
+</table>
 <div>
-    <div>Date Time: &nbsp; <span id='calender'></span></div>
-    <div>Decimal Representation: &nbsp; <span id='decimal'></span></div>
-    <div>Continued Fraction Representation: <br /><span id='contfrac'></span></div>
+    <span id='contfrac' />
 </div>
 
 <script>
@@ -33,19 +44,19 @@ permalink: /clock
     }
     function formatYearContFrac(year, p, q) {
         let g = gcd(p, q);
-        return "$" + year + "+" + formatContFrac(p / g, q / g, 0) + "$"
+        return "\\[" + year + "+" + formatContFrac(p / g, q / g, 0) + "\\]"
     }
     function update() {
         let t = new Date();
         let year = t.getFullYear();
         document.getElementById('calender').innerHTML =
-            year + "-" + pad(t.getMonth() + 1) + "-" + pad(t.getDate()) + "  " +
-            pad(t.getHours()) + ":" + pad(t.getMinutes()) + ":" + pad(t.getSeconds());
+            "\\(" + year + "/" + pad(t.getMonth() + 1) + "/" + pad(t.getDate()) + " \\text{ T } " +
+            pad(t.getHours()) + ":" + pad(t.getMinutes()) + ":" + pad(t.getSeconds()) + "\\)";
 
         let start = new Date(year, 0, 1, 0, 0, 0).valueOf();
         let end = new Date(year + 1, 0, 1, 0, 0, 0).valueOf();
         let current = new Date(year, t.getMonth(), t.getDate(), t.getHours(), t.getMinutes(), t.getSeconds()).valueOf();
-        document.getElementById('decimal').innerHTML = year + (current - start) / (end - start);
+        document.getElementById('decimal').innerHTML = "\\(" + (year + (current - start) / (end - start)) + "\\)";
 
         let fracElem = document.getElementById('contfrac');
         fracElem.innerHTML = formatYearContFrac(year, current - start, end - start);
