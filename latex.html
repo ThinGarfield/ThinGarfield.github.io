@@ -23,7 +23,7 @@ permalink: /latex
         event.preventDefault();
         var inputText = document.getElementById("inputbox").value;
         var output = document.getElementById("output");
-        output.innerHTML = "$$" + inputText + "$$";
-        MathJax.Hub.Queue(["Typeset", MathJax.Hub, output]);
+        output.innerHTML = "\\[" + inputText + "\\]";
+        MathJax.typeset();
     }
 </script>

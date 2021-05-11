@@ -33,7 +33,7 @@ permalink: /clock
     }
     function formatYearContFrac(year, p, q) {
         let g = gcd(p, q);
-        return "\\[" + year + "+" + formatContFrac(p / g, q / g, 0) + "\\]"
+        return "$" + year + "+" + formatContFrac(p / g, q / g, 0) + "$"
     }
     function update() {
         let t = new Date();
@@ -49,7 +49,7 @@ permalink: /clock
 
         let fracElem = document.getElementById('contfrac');
         fracElem.innerHTML = formatYearContFrac(year, current - start, end - start);
-        MathJax.Hub.Queue(["Typeset", MathJax.Hub, fracElem]);
+        MathJax.typeset();
     }
 
     let timer = setInterval(update, 1000);
