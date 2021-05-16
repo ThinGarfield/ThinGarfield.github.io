@@ -44,7 +44,7 @@ permalink: /clock
     }
     function formatYearContFrac(year, p, q) {
         let g = gcd(p, q);
-        return "\\[" + year + "+" + formatContFrac(p / g, q / g, 0) + "\\]"
+        return "\\(\\quad \\quad " + year + "+" + formatContFrac(p / g, q / g, 0) + "\\)"
     }
     function update() {
         let t = new Date();
